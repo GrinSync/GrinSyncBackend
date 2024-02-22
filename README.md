@@ -1,14 +1,13 @@
-### GrinSync
-# Backend - Django over PostgreSQL
+# GrinSync
+The Django backend for the GrinSync project. 
 
-The backend for the GrinSync project. 
-
+There's not really anything here yet, but hopefully the info below will help you get started
 
 ## Testing on a Local Machine
 This is used for local development and testing changes before pushing code to production.
 
 _Note:
-For a Windows machine, you could use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) to run Linux-style commands. Although, this might cause processes to slow down since your repository does not live under your WSL installation. It is recommended that you use the Windows-specific commands._
+For a Windows machine, it's great to know that [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) is an option that lets you run Linux commands. It might be a tad (depending on what you're doing) slower since it's just a VM running on Windows, so probably stick to the Windows-specific commands; I just love WSL and figured I'd give it a shoutout._
 
 ### Step 0: Create a virtualenv
 

@@ -3,6 +3,10 @@ The Django backend for the GrinSync project.
 
 There's not really anything here yet, but hopefully the info below will help you get started
 
+## Coding
+### Using the Linter
+We use pylinter and the settings that are stored in `.pylintrc`. To get started, I'd recommend installing the pylinter extension for VSCode. From there you can use the command palette to run the linting server and you should be set. If you get an encoding error, __copy the existing config__, delete the file, and then run `pylint --generate-rcfile | out-file -encoding utf8 .pylintrc` before pasting the old config in place of the newly generated file
+
 ## Testing on a Local Machine
 This is used for local development and testing changes before pushing code to production.
 

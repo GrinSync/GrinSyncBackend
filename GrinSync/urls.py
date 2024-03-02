@@ -20,6 +20,6 @@ from api import views as apiViews
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('/api/getUser', apiViews.getUser, name = 'getUser'),
-    path('/api/getEvent', apiViews.getUser, name = 'getUser'),
+    path('api/getUser', apiViews.getUser, name = 'getUser'),
+    path('api/getEvent', apiViews.getUser, name = 'getUser'),
 ]

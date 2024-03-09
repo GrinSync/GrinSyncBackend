@@ -6,6 +6,10 @@ from rest_framework.authtoken.models import Token
 from api.models import User, Event
 
 
+def validate(request):
+    """ Return all the info for a given user. Takes: id"""
+    return HttpResponse("Success!", content_type="text/html")
+
 def getUser(request):
     """ Return all the info for a given user. Takes: id"""
     uid = request.GET.get("id", "")

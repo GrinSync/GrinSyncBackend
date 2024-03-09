@@ -9,8 +9,10 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
+# pylint: disable=unused-import
 
 from pathlib import Path
+from .extra_settings import SECRET_KEY, DEBUG
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,14 +21,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-jr9c=f@+r_t--(5ef@&9u38y--a%_(lrgw%y8hw1ld8ijnwa6i'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost",
-                  "grinsync.com", "grinsync.com"]
+                  "3.16.235.156", "grinsync.com", "grinsync.com"]
 
 
 # Application definition

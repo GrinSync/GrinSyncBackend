@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-jr9c=f@+r_t--(5ef@&9u38y--a%_(lrgw%y8hw1ld8ijnwa6i
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1", "localhost",
+                  "grinsync.com", "grinsync.com"]
 
 
 # Application definition

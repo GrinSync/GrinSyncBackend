@@ -24,11 +24,12 @@ class Event(models.Model):
     """ Event Model - stores info for the events we're going to serve """
     # Basic event info
     host = models.ForeignKey(User, on_delete = models.PROTECT)
+    name = models.CharField(max_length = 64)
     start = models.DateTimeField(blank = False, null = False)
     end = models.DateTimeField(blank = False, null = False)
     # location = models.CharField()
     ## TODO: Should we make it so people can search by location? If so use ForeignKey
 
     # Other stuff we might want to record about events
-    studentsOnly = models.BooleanField() # We'll store this as its own field for ease of use later
-    tags = models.JSONField()
+    studentsOnly = models.BooleanField(blank = False) # We'll store this as its own field for ease of use later
+    tags = models.JSONField(blank = True, null = True)

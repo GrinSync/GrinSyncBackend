@@ -31,5 +31,5 @@ class Event(models.Model):
     ## TODO: Should we make it so people can search by location? If so use ForeignKey
 
     # Other stuff we might want to record about events
-    studentsOnly = models.BooleanField(blank = False) # We'll store this as its own field for ease of use later
+    studentsOnly = models.BooleanField(blank = False) # We'll store this as its own field for later
     tags = models.JSONField(blank = True, null = True)

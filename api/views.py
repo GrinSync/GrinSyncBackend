@@ -1,14 +1,23 @@
+# pylint: disable=unused-argument
 from django.core import serializers
 from django.http import HttpResponse
 from django.contrib.auth import authenticate
+# from django.contrib.auth.decorators import login_required
 from rest_framework.authtoken.models import Token
 
 from api.models import User, Event
 
 
 def validate(request):
-    """ Return all the info for a given user. Takes: id"""
+    """ Check the connection works """
     return HttpResponse("Success!", content_type="text/html")
+
+# @login_required
+def validateLogin(request):
+    """ Check the login worked """
+    if request.user.is_authenticated:
+        return HttpResponse("Success!", content_type="text/html")
+    return HttpResponse("Nope - permission denied", content_type="text/html", status = 401)
 
 def getUser(request):
     """ Return all the info for a given user. Takes: id"""

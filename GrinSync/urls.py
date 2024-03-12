@@ -22,5 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/getUser', apiViews.getUser, name = 'getUser'),
     path('api/getEvent', apiViews.getUser, name = 'getEvent'),
+    path('api/auth', apiViews.authenticate, name = 'auth'),
+    path('api/validate/login', apiViews.validateLogin, name = 'vallog'),
     path('api/validate', apiViews.validate, name = 'val'),
 ]

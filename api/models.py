@@ -16,7 +16,7 @@ class User(AbstractUser):
     """ User Model - extends AbstractUser Model """
     # Whether they're student, faculty, or community
     TYPES = TYPES  # Need this so User.TYPES works later
-    type = models.CharField(choices=TYPES, max_length=3, blank=False, default=None)
+    type = models.CharField(choices=TYPES, max_length=3, blank=False, default="COM")
 
 
 # The model for events. This will probably be the main model we're dealing with

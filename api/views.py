@@ -3,6 +3,7 @@ from django.core import serializers
 from django.http import HttpResponse
 from django.contrib.auth import authenticate
 # from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 
 from api.models import User, Event
@@ -13,6 +14,7 @@ def validate(request):
     return HttpResponse("Success!", content_type="text/html")
 
 # @login_required
+@csrf_exempt
 def validateLogin(request):
     """ Check the login worked """
     if request.user.is_authenticated:
@@ -26,7 +28,6 @@ def getUser(request):
     userJson = serializers.serialize("json", user)
     return HttpResponse(userJson, content_type="application/json")
 
-
 def getEvent(request):
     """ Return all the info for a event user. Takes: id"""
     uid = request.GET.get("id", "")
@@ -34,7 +35,7 @@ def getEvent(request):
     eventJson = serializers.serialize("json", event)
     return HttpResponse(eventJson, content_type="application/json")
 
-
+@csrf_exempt
 def apiLogin(request):
     """ Inital login API call - POST accepts 'username' and 'password' and returns a token"""
     username = request.POST.get("username", None)

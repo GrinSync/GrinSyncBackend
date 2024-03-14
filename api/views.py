@@ -95,17 +95,17 @@ def createEvent(request):
                                 safe=False, status = 400)
 
 
-    try:
-        pass
-        # user = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
-        #                                 # location = location, start = startTime, end = endTime,
-        #                                 description = description, studentsOnly = bool(studentsOnly),
-        #                                 tags = tags)
-    except IntegrityError:
-        return JsonResponse({'error' : 'Integrity Error: It\'s possible that username is already in use'},
-                                safe=False, status = 400)
+    # try:
+    event = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
+                                    # location = location,
+                                    start = startDT, end = endDT,
+                                    description = description, studentsOnly = bool(studentsOnly),
+                                    tags = tags)
+    # except IntegrityError:
+    #     return JsonResponse({'error' : 'Integrity Error: It\'s possible that event title is already in use'},
+    #                             safe=False, status = 400)
 
-    return JsonResponse({'id' : "user.id"}, safe=False, status = 200)
+    return JsonResponse({'id' : event.id}, safe=False, status = 200)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

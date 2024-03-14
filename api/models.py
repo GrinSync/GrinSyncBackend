@@ -19,12 +19,20 @@ class User(AbstractUser):
     type = models.CharField(choices=TYPES, max_length=3, blank=False, default="COM")
 
 
+class Organization(models.Model):
+    """ A model for a student org """
+    name = models.CharField(max_length = 64)
+    studentLeaders = models.ManyToManyField(User, blank=False, related_name='childOrgs')
+
+
 # The model for events. This will probably be the main model we're dealing with
 class Event(models.Model):
     """ Event Model - stores info for the events we're going to serve """
     # Basic event info
     host = models.ForeignKey(User, on_delete = models.PROTECT)
-    name = models.CharField(max_length = 64)
+    parentOrg = models.ForeignKey(Organization, blank = True, on_delete = models.PROTECT)
+    title = models.CharField(max_length = 64)
+    description = models.TextField(blank = True)
     start = models.DateTimeField(blank = False, null = False)
     end = models.DateTimeField(blank = False, null = False)
     # location = models.CharField()

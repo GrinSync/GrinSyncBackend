@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 # import django.middleware.csrf as csrf
 # from rest_framework.views import APIView
 # from rest_framework.response import Response
-from api.models import Event, User
+from api.models import Event, User, Organization
 import api.serializers as serializers
 
 # Maybe TODO: look into class based views?
@@ -63,6 +63,49 @@ def getUser(request):
 
     userJson = serializers.UserSerializer(user)
     return JsonResponse(userJson.data, safe=False)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def createEvent(request):
+    """ Creates a new event in the database """
+    title = request.POST.get("title", None)
+    description = request.POST.get("description", "") # Optional
+    orgID = request.POST.get("org_id", "") # Optional
+    location = request.POST.get("location", None)
+    studentsOnly = request.POST.get("studentsOnly", None)
+    tags = request.POST.get("tags", "") # Optional?
+    date = request.POST.get("date", None)
+
+    if not (title and location and studentsOnly and date):
+        return JsonResponse({'error' : 'Integrity Error: Not all required fields were provided'},
+                                safe=False, status = 400)
+
+    if orgID != "":
+        hostOrg = Organization.objects.get(id=orgID)
+    else:
+        hostOrg = None
+
+    try:
+        split = date.split("-")
+        startDT = datetime.strptime(split[0], "%m/%d/%Y %H:%M")
+        endDT = datetime.strptime(split[1], "%m/%d/%Y %H:%M")
+        assert startDT < endDT
+    except (ValueError, AssertionError):
+        return JsonResponse({'error' : 'Invalid DateTime: check your "date" field'},
+                                safe=False, status = 400)
+
+
+    try:
+        pass
+        # user = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
+        #                                 # location = location, start = startTime, end = endTime,
+        #                                 description = description, studentsOnly = bool(studentsOnly),
+        #                                 tags = tags)
+    except IntegrityError:
+        return JsonResponse({'error' : 'Integrity Error: It\'s possible that username is already in use'},
+                                safe=False, status = 400)
+
+    return JsonResponse({'id' : "user.id"}, safe=False, status = 200)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

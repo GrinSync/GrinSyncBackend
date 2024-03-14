@@ -27,4 +27,5 @@ urlpatterns = [
     # path('api/auth', apiViews.apiLogin, name = 'auth'),
     path('api/validate/login', apiViews.validateLogin, name = 'vallog'),
     path('api/validate', apiViews.validate, name = 'val'),
+    path('api/create/user', apiViews.createUser, name = 'newUsr'),
 ]

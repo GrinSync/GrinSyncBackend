@@ -63,6 +63,12 @@ python -m pip install -r requirements.txt
 
 ### Step 2 (for now, since there's not really any thing there): Start up the server
 
+If you want to check the tests, you can use the following command, but if you're just pulling, the tests have been checked before push:
+
+```
+python manage.py test
+```
+
 Run server with:
 
 ```
@@ -77,3 +83,5 @@ Create admin user with:
 ```
 python manage.py createsuperuser
 ```
+
+You can test the API locally by installing Postman and using the [public workspace](https://www.postman.com/descent-module-operator-84099879/workspace/grinsyncworkspace/collection/29620227-3562082b-4020-4b32-8b28-3082ef7d8bfc?action=share&creator=29620227) we've set up for testing:

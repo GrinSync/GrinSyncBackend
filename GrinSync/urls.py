@@ -22,11 +22,11 @@ from api import views as apiViews
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/getUser', apiViews.getUser, name = 'getUser'),
-    path('api/getEvent', apiViews.getUser, name = 'getEvent'),
+    path('api/getEvent', apiViews.getEvent, name = 'getEvent'),
     path('api/auth', tokenViews.obtain_auth_token),
     # path('api/auth', apiViews.apiLogin, name = 'auth'),
     path('api/validate/login', apiViews.validateLogin, name = 'vallog'),
     path('api/validate', apiViews.validate, name = 'val'),
-    path('api/create/user', apiViews.createUser, name = 'newUsr'),
-    path('api/create/event', apiViews.createEvent, name = 'newUsr'),
+    path('api/create/user', apiViews.createUser, name = 'newUser'),
+    path('api/create/event', apiViews.createEvent, name = 'newEvent'),
 ]

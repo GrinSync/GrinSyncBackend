@@ -74,9 +74,10 @@ def createEvent(request):
     location = request.POST.get("location", None)
     studentsOnly = request.POST.get("studentsOnly", None)
     tags = request.POST.get("tags", "") # Optional?
-    date = request.POST.get("date", None)
+    start = request.POST.get("start", None)
+    end = request.POST.get("end", None)
 
-    if not (title and location and studentsOnly and date):
+    if not (title and location and studentsOnly and start):
         return JsonResponse({'error' : 'Integrity Error: Not all required fields were provided'},
                                 safe=False, status = 400)
 
@@ -86,12 +87,14 @@ def createEvent(request):
         hostOrg = None
 
     try:
-        split = date.split("-")
-        startDT = datetime.strptime(split[0], "%m/%d/%Y %H:%M")
-        endDT = datetime.strptime(split[1], "%m/%d/%Y %H:%M")
-        assert startDT < endDT
+        startDT = datetime.strptime(start, "%Y-%m-%d %H:%M:%S.%f")
+        if end:
+            endDT = datetime.strptime(end, "%Y-%m-%d %H:%M:%S.%f")
+            assert startDT < endDT
+        else:
+            endDT = startDT.replace(hour=23, minute=59)
     except (ValueError, AssertionError):
-        return JsonResponse({'error' : 'Invalid DateTime: check your "date" field'},
+        return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
                                 safe=False, status = 400)
 
 

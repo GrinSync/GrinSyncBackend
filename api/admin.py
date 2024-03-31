@@ -5,4 +5,3 @@ from api.models import User, Event, Organization
 admin.site.register(User)
 admin.site.register(Event)
 admin.site.register(Organization)
-

@@ -5,6 +5,7 @@ from django.http import HttpResponse, JsonResponse
 # from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import ensure_csrf_cookie
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
@@ -55,7 +56,10 @@ def createUser(request):
 @permission_classes([IsAuthenticated])
 def getUser(request):
     """ Return all the info for a given user. Takes: id """
-    uid = request.GET.get("id", "")
+    uid = request.GET.get("id", None)
+    if not uid:
+        uid = Token.objects.get(key=request.auth.key).user_id
+
     try:
         user = User.objects.get(pk = uid)
     except ObjectDoesNotExist:

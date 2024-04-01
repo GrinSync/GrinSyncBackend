@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/getUser', apiViews.getUser, name = 'getUser'),
     path('api/getEvent', apiViews.getEvent, name = 'getEvent'),
+    path('api/upcoming', apiViews.getUpcoming, name = 'getPublic'),
     path('api/auth', tokenViews.obtain_auth_token),
     # path('api/auth', apiViews.apiLogin, name = 'auth'),
     path('api/validate/login', apiViews.validateLogin, name = 'vallog'),

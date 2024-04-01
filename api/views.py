@@ -1,5 +1,5 @@
 # pylint: disable=unused-argument
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db import IntegrityError
 from django.http import HttpResponse, JsonResponse
 # from django.contrib.auth.decorators import login_required
@@ -117,12 +117,23 @@ def createEvent(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def getEvent(request):
-    """ Return all the info for a event user. Takes: id """
-    uid = request.GET.get("id", "")
-    event = Event.objects.get(pk = uid)
+    """ Return all the info for an event. Takes: id """
+    eid = request.GET.get("id", "")
+    event = Event.objects.get(pk = eid)
     eventJson = serializers.EventSerializer(event)
     return JsonResponse(eventJson.data, safe=False)
 
+
+@api_view(['GET'])
+def getUpcoming(request):
+    """ Return all the info for upcomming events. """
+    today = datetime.today()
+    upcomming = Event.objects.filter(start__gte=today)
+    upcomming = upcomming.exclude(start__gt = today + timedelta(weeks = 1))
+    if (not request.user.is_authenticated) or (request.user.type != "STU"):
+        upcomming = upcomming.exclude(studentsOnly = True)
+    eventsJson = serializers.EventSerializer(upcomming, many = True)
+    return JsonResponse(eventsJson.data, safe=False)
 
 
 

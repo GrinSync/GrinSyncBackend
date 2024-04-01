@@ -15,3 +15,4 @@ class EventSerializer(serializers.ModelSerializer):
     class Meta:
         """ Meta """
         model = Event
+        fields = '__all__'

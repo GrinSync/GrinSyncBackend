@@ -1,6 +1,7 @@
 """ models.py - interfaces and structures the database """
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.forms import ValidationError
 
 
 TYPES = [
@@ -30,7 +31,7 @@ class Event(models.Model):
     """ Event Model - stores info for the events we're going to serve """
     # Basic event info
     host = models.ForeignKey(User, on_delete = models.PROTECT)
-    parentOrg = models.ForeignKey(Organization, blank = False, null = True, on_delete = models.PROTECT)
+    parentOrg = models.ForeignKey(Organization, blank = True, null = True, on_delete = models.PROTECT)
     title = models.CharField(max_length = 64)
     description = models.TextField(blank = True)
     start = models.DateTimeField(blank = False, null = False)
@@ -41,3 +42,9 @@ class Event(models.Model):
     # Other stuff we might want to record about events
     studentsOnly = models.BooleanField(blank = False) # We'll store this as its own field for later
     tags = models.JSONField(blank = True, null = True)
+
+    def save(self, *args, **kwargs):
+        if self.host is None and self.parentOrg is None:
+            raise ValidationError("Events must have a host or hosting org")
+        
+        return super().save()

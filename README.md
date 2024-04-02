@@ -1,7 +1,8 @@
 # GrinSync
 The Django backend for the GrinSync project. 
 
-There's not really anything here yet, but hopefully the info below will help you get started
+If you're already set up, check here for live updating documentation: [https://documenter.getpostman.com/view/29620227/2sA35JzKYo](https://documenter.getpostman.com/view/29620227/2sA35JzKYo)
+Otherwise, the info below will help you get started
 
 ## Coding
 ### Using the Linter

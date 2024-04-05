@@ -126,14 +126,25 @@ def getEvent(request):
 
 @api_view(['GET'])
 def getUpcoming(request):
-    """ Return all the info for upcomming events. """
-    today = datetime.today()
-    upcomming = Event.objects.filter(start__gte=today)
-    upcomming = upcomming.exclude(start__gt = today + timedelta(weeks = 1))
-    if (not request.user.is_authenticated) or (request.user.type != "STU"):
-        upcomming = upcomming.exclude(studentsOnly = True)
-    eventsJson = serializers.EventSerializer(upcomming, many = True)
-    return JsonResponse(eventsJson.data, safe=False)
+    """ Return all the info for upcoming events. """
+    today = datetime.today() # assigns today's date to a variable
+    upcoming = Event.objects.filter(start__gte=today) # gets events that have a starting date greater than or equal to today
+    upcoming = upcoming.exclude(start__gt = today + timedelta(weeks = 1)) # limits upcoming events up to those that start a week from now
+    if (not request.user.is_authenticated) or (request.user.type != "STU"):#blocks student-only events if user is not a studen
+        upcoming = upcoming.exclude(studentsOnly = True)
+    eventsJson = serializers.EventSerializer(upcoming, many = True) #turns info into a string
+    return JsonResponse(eventsJson.data, safe=False)  #returns the info that the user needs in JSON form
+
+@api_view(['GET'])
+def getEventsInDay(request):
+    """ Return the info for a day's events. """
+    requestedDay = request.GET.get("start") # get the requested day
+    eventsInDay = Event.objects.filter(start__gte=requestedDay) # get events that start on the request day
+    eventsInDay = eventsInDay.exclude(start__gt = requestedDay + timedelta(day = 1)) # limits events to the ones from the requested day
+    if (not request.user.is_authenticated) or (request.user.type != "STU"): #blocks student-only events if user is not a student
+        eventsInDay = eventsInDay.exclude(studentsOnly = True)
+    eventsJson = serializers.EventSerializer(eventsInDay, many = True) #turns info into a string
+    return JsonResponse(eventsJson.data, safe=False) #returns the info that the user needs in JSON form
 
 
 

@@ -101,12 +101,13 @@ def createEvent(request):
         return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
                                 safe=False, status = 400)
 
+    studentsOnly = studentsOnly.lower() in ['true', '1', 't', 'y', 'yes', 'yeah', 'yup', 'certainly', 'uh-huh']
 
     # try:
     event = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
                                     location = location,
                                     start = startDT, end = endDT,
-                                    description = description, studentsOnly = bool(studentsOnly),
+                                    description = description, studentsOnly =studentsOnly,
                                     tags = tags)
     # except IntegrityError:
     #     return JsonResponse({'error' : 'Integrity Error: It\'s possible that event title is already in use'},

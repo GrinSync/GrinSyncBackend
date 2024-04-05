@@ -137,9 +137,10 @@ def getAll(request):
 def getUpcoming(request):
     """ Return all the info for upcoming events. """
     today = datetime.today() # assigns today's date to a variable
-    upcoming = Event.objects.filter(start__gte=today) # gets events that have a starting date greater than or equal to today
-    upcoming = upcoming.exclude(start__gt = today + timedelta(weeks = 1)) # limits upcoming events up to those that start a week from now
-    if (not request.user.is_authenticated) or (request.user.type != "STU"):#blocks student-only events if user is not a studen
+    upcoming = Event.objects.filter(start__gte=today) # gets events with a starting date >= to today
+    upcoming = upcoming.exclude(start__gt = today + timedelta(weeks = 4)) # limits upcoming events a week out
+    # hide student-only events if user is not a student
+    if (not request.user.is_authenticated) or (request.user.type != "STU"):
         upcoming = upcoming.exclude(studentsOnly = True)
     eventsJson = serializers.EventSerializer(upcoming, many = True) #turns info into a string
     return JsonResponse(eventsJson.data, safe=False)  #returns the info that the user needs in JSON form

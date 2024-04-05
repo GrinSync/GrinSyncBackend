@@ -104,7 +104,7 @@ def createEvent(request):
 
     # try:
     event = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
-                                    # location = location,
+                                    location = location,
                                     start = startDT, end = endDT,
                                     description = description, studentsOnly = bool(studentsOnly),
                                     tags = tags)

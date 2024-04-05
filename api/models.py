@@ -36,7 +36,7 @@ class Event(models.Model):
     description = models.TextField(blank = True)
     start = models.DateTimeField(blank = False, null = False)
     end = models.DateTimeField(blank = False, null = False)
-    # location = models.CharField()
+    location = models.CharField(max_length = 64, blank = True, null = True)
     ## TODO: Should we make it so people can search by location? If so use ForeignKey
 
     # Other stuff we might want to record about events

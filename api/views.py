@@ -123,6 +123,15 @@ def getEvent(request):
     eventJson = serializers.EventSerializer(event)
     return JsonResponse(eventJson.data, safe=False)
 
+@api_view(['GET'])
+def getAll(request):
+    """ Return all the info for all events. """
+    events = Event.objects.all()
+    #blocks student-only events if user is not a studen
+    if (not request.user.is_authenticated) or (request.user.type != "STU"):
+        events = events.exclude(studentsOnly = True)
+    eventsJson = serializers.EventSerializer(events, many = True) #turns info into a string
+    return JsonResponse(eventsJson.data, safe=False)  #returns the info that the user needs in JSON form
 
 @api_view(['GET'])
 def getUpcoming(request):

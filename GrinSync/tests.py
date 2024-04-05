@@ -10,7 +10,7 @@ class PostTestCase(TestCase):
         self.time = timezone.now()
         self.user1 = User.objects.create_user(username="admin", type = 'STU')
         Event.objects.create(host=self.user1,
-                             name="Testing Event",
+                             title="Testing Event",
                             start=self.time,
                             end=self.time + timedelta(hours=1),
                             studentsOnly=True)
@@ -18,7 +18,7 @@ class PostTestCase(TestCase):
     def testEventIsPosted(self):
         """Posts are created"""
         test = Event.objects.get(host=self.user1)
-        self.assertEqual(test.name, "Testing Event")
+        self.assertEqual(test.title, "Testing Event")
 
     # TODO: We'll add API test later
     # def test_valid_form_data(self):

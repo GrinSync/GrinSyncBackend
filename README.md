@@ -8,8 +8,9 @@ Otherwise, the info below will help you get started
 - *api > tests.py*: The file with the testing classes for the backend. 
 - *GrinSync*: Code to set up Django backend.
 
-## Operational Use Cases (so far)
-- Ben creates an event by entering his event information in GrinSync (FEATURES NOT YET DONE FOR THIS USE CASE: repeating events option, associating student organization, picture upload - we may switch this to a stretch feature; as of now, we have the MVP for the event creation page - event title, location, date/time, description, event tags).
+## Operational Use Cases (so far) ## 
+- Ben creates an event by entering his event information in GrinSync (FEATURES NOT YET DONE FOR THIS USE CASE: repeating events option, associating student organization, picture upload (we may switch this to a stretch feature); as of now, we have the MVP for the event creation page - event title, location, date/time, description, event tags).
+- Noah looks through the daily, weekly, and monthly calendar views on the Calendar page. 
 
 ## Coding
 ### Using the Linter

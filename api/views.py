@@ -142,6 +142,7 @@ def getUpcoming(request):
     # hide student-only events if user is not a student
     if (not request.user.is_authenticated) or (request.user.type != "STU"):
         upcoming = upcoming.exclude(studentsOnly = True)
+    upcoming = upcoming.order_by('start')
     eventsJson = serializers.EventSerializer(upcoming, many = True) #turns info into a string
     return JsonResponse(eventsJson.data, safe=False)  #returns the info that the user needs in JSON form
 

@@ -144,6 +144,23 @@ def getEvent(request):
     return JsonResponse(eventJson.data, safe=False)
 
 @api_view(['GET'])
+def search(request): # TODO: decide if want one search for everything or different for events vs users
+    """ Return all the matching events for a given search. Takes: query """
+    query = request.GET.get("query", None)
+    if not query:
+        return JsonResponse({'error' : "Required Argument 'query' was not provided"}, safe=False, status = 400)
+
+    matching = (Event.objects.filter(title__contains = query) |
+                    Event.objects.filter(location__contains = query)) # TODO: Sort by closeness to date not exceeding?
+ 
+    # hide student-only events if user is not a student
+    if (not request.user.is_authenticated) or (request.user.type != "STU"):
+        matching = matching.exclude(studentsOnly = True)
+
+    eventJson = serializers.EventSerializer(matching, many = True)
+    return JsonResponse(eventJson.data, safe=False)
+
+@api_view(['GET'])
 def getAll(request):
     """ Return all the info for all events. """
     events = Event.objects.all()

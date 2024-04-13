@@ -1,5 +1,6 @@
 # pylint: disable=unused-argument
 from datetime import datetime, timedelta
+from dateutil import relativedelta
 from django.db import IntegrityError
 from django.http import HttpResponse, JsonResponse
 # from django.contrib.auth.decorators import login_required
@@ -98,6 +99,10 @@ def createEvent(request):
     start = request.POST.get("start", None)
     end = request.POST.get("end", None)
 
+    repeatDays = request.POST.get("repeatingDays", 0)
+    repeatMonths = request.POST.get("repeatingMonths", 0)
+    repeatEnd = request.POST.get("repeatDate", None)
+
     # Check that all of the required fields were provided
     if not (title and location and studentsOnly and start):
         return JsonResponse({'error' : 'Integrity Error: Not all required fields were provided'},
@@ -122,12 +127,44 @@ def createEvent(request):
                                 safe=False, status = 400)
 
     # Turn studentsOnly from a string to a bool
-    studentsOnly = studentsOnly.lower() in ['true', '1', 't', 'y', 'yes', 'yeah', 'yup', 'certainly', 'uh-huh']
+    studentsOnly = studentsOnly.lower() in ['true', '1', 't', 'y', 'yes', 'yeah', 'yup', 'no cap', 'uh-huh']
+
+
+    # Stuff for repeating events
+    if (repeatDays != 0) or (repeatMonths != 0):
+        if not repeatEnd:
+            return JsonResponse({'error' : "Field not found: All repeating events must have an end date"},
+                                safe=False, status = 400)
+
+        repeatEnd = datetime.strptime(repeatEnd, "%Y-%m-%d %H:%M:%S.%f").replace(hour=23, minute=59)
+        offset = relativedelta.relativedelta(days=int(repeatDays), months=int(repeatMonths))
+        firstEvent = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
+                                    location = location, start = startDT, end = endDT,
+                                    description = description, studentsOnly =studentsOnly,
+                                    tags = tags)
+
+        prevEvent = firstEvent
+        startDT = startDT + offset
+        endDT = endDT + offset
+        while startDT <= repeatEnd:
+            event = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
+                                    location = location, start = startDT, end = endDT,
+                                    description = description, studentsOnly =studentsOnly,
+                                    tags = tags)
+            prevEvent.nextRepeat = event
+            prevEvent.save()
+            prevEvent = event
+            startDT = startDT + offset
+            endDT = endDT + offset
+
+        # Send the user back the information it'll need
+        return JsonResponse({'id' : firstEvent.id}, safe=False, status = 200)
+
+
 
     # Actually interact with the database and create the event
     event = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
-                                    location = location,
-                                    start = startDT, end = endDT,
+                                    location = location, start = startDT, end = endDT,
                                     description = description, studentsOnly =studentsOnly,
                                     tags = tags)
 
@@ -152,7 +189,7 @@ def search(request): # TODO: decide if want one search for everything or differe
 
     matching = (Event.objects.filter(title__contains = query) |
                     Event.objects.filter(location__contains = query)) # TODO: Sort by closeness to date not exceeding?
- 
+
     # hide student-only events if user is not a student
     if (not request.user.is_authenticated) or (request.user.type != "STU"):
         matching = matching.exclude(studentsOnly = True)
@@ -174,7 +211,7 @@ def getAll(request):
 @api_view(['GET'])
 def getUpcoming(request):
     """ Return all the info for upcoming events. """
-    today = datetime.today() # assigns today's date to a variable
+    today = datetime.today().replace(minute=0) # assigns today's date to a variable
     upcoming = Event.objects.filter(start__gte=today) # gets events with a starting date >= to today
     upcoming = upcoming.exclude(start__gt = today + timedelta(weeks = 4)) # limits upcoming events a week out
     # hide student-only events if user is not a student

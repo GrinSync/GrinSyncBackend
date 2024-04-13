@@ -18,6 +18,7 @@ class User(AbstractUser):
     # Whether they're student, faculty, or community
     TYPES = TYPES  # Need this so User.TYPES works later
     type = models.CharField(choices=TYPES, max_length=3, blank=False, default="COM")
+    # TODO: Add ManyToMany field of favorites
 
 
 class Organization(models.Model):
@@ -30,8 +31,8 @@ class Organization(models.Model):
 class Event(models.Model):
     """ Event Model - stores info for the events we're going to serve """
     # Basic event info
-    host = models.ForeignKey(User, on_delete = models.PROTECT)
-    parentOrg = models.ForeignKey(Organization, blank = True, null = True, on_delete = models.PROTECT)
+    host = models.ForeignKey(User, on_delete = models.DO_NOTHING)
+    parentOrg = models.ForeignKey(Organization, blank = True, null = True, on_delete = models.DO_NOTHING)
     title = models.CharField(max_length = 64)
     description = models.TextField(blank = True)
     start = models.DateTimeField(blank = False, null = False)
@@ -43,8 +44,12 @@ class Event(models.Model):
     studentsOnly = models.BooleanField(blank = False) # We'll store this as its own field for later
     tags = models.JSONField(blank = True, null = True)
 
+    # For repeating events
+    nextRepeat = models.OneToOneField('Event', blank = True, null=True, related_name="previousRepeat",
+                                      on_delete=models.DO_NOTHING)
+
     def save(self, *args, **kwargs):
         if self.host is None and self.parentOrg is None:
             raise ValidationError("Events must have a host or hosting org")
-        
+
         return super().save()

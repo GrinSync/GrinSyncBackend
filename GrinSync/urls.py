@@ -21,6 +21,7 @@ from api import views as apiViews
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/search', apiViews.search, name = 'search'),
     path('api/getUser', apiViews.getUser, name = 'getUser'),
     path('api/getEvent', apiViews.getEvent, name = 'getEvent'),
     path('api/getAll', apiViews.getAll, name = 'getAll'),

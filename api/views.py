@@ -5,16 +5,22 @@ from django.db import IntegrityError
 from django.http import HttpResponse, JsonResponse
 # from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import EmailMessage, send_mail
+from django.db import IntegrityError
+from django.dispatch import receiver
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django_rest_passwordreset.signals import reset_password_token_created
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
+import api.serializers as serializers
 # import django.middleware.csrf as csrf
 # from rest_framework.views import APIView
 # from rest_framework.response import Response
-from api.models import Event, User, Organization
-import api.serializers as serializers
+from api.models import Event, Organization, User
 
 # Maybe TODO: look into class based views?
 
@@ -234,6 +240,31 @@ def getEventsInDay(request):
     return JsonResponse(eventsJson.data, safe=False) #returns the info that the user needs in JSON form
 
 
+
+@receiver(reset_password_token_created)
+def passwordResetTokenCreated(sender, instance, reset_password_token, *args, **kwargs):
+    """ Generates a token for a password reset link and sends it out to the user that requested it """
+
+    emailPlaintextMessage = f"""Open the link to reset your password: {instance.request.build_absolute_uri(
+        'http://localhost:8000/password_change/?token=')}{reset_password_token.key}"""
+
+    print(emailPlaintextMessage)
+
+    send_mail(
+        # title:
+        "Password Reset for GrinSync",
+        # message:
+        emailPlaintextMessage,
+        # from:
+        "password_reset@grinsync.com",
+        # to:
+        [reset_password_token.user.email],
+        fail_silently=False,
+    )
+
+def passwordChange(request):
+    token = request.GET.get("token", None)
+    return render(request, 'password_change.html', {'token':token})
 
 
 ## In case we need later, here was an attempt at a custom login & token return implementation

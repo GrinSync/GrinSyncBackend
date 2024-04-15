@@ -233,8 +233,31 @@ def getEventsInDay(request):
     eventsJson = serializers.EventSerializer(eventsInDay, many = True) #turns info into a string
     return JsonResponse(eventsJson.data, safe=False) #returns the info that the user needs in JSON form
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def likeEvent(request):
+    """ Adds an event to a user's like events list. Takes: id (of event) """
+    eid = request.POST.get("id", "")
+    try:
+        event = Event.objects.get(pk = eid)
+    except ObjectDoesNotExist:
+        return HttpResponse(f"Event with id '{eid}' does not exist", status = 404)
+    except ValueError:
+        return HttpResponse("No id provided", status = 404)
+    
+    user = request.user
+    user.likedEvents.add(event)
+    user.save()
+    eventJson = serializers.EventSerializer(event)
+    return JsonResponse(eventJson.data, safe=False, status=200)
 
-
+@api_view(['GET'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def getlikedEvents(request):
+    """ Return all of a users liked events. """
+    user = request.user
+    eventJson = serializers.EventSerializer(user.likedEvents.all(), many = True)
+    return JsonResponse(eventJson.data, safe=False, status=200)
 
 ## In case we need later, here was an attempt at a custom login & token return implementation
 # from django.contrib.auth import authenticate

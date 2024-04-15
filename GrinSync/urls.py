@@ -25,6 +25,8 @@ urlpatterns = [
     path('api/getUser', apiViews.getUser, name = 'getUser'),
     path('api/getEvent', apiViews.getEvent, name = 'getEvent'),
     path('api/getAll', apiViews.getAll, name = 'getAll'),
+    path('api/getLikedEvents', apiViews.getlikedEvents, name = 'getLikedEvents'),
+    path('api/likeEvent', apiViews.likeEvent, name = 'likeEvent'),
     path('api/upcoming', apiViews.getUpcoming, name = 'getUpcomming'),
     path('api/auth', tokenViews.obtain_auth_token),
     # path('api/auth', apiViews.apiLogin, name = 'auth'),

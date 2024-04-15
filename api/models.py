@@ -18,8 +18,7 @@ class User(AbstractUser):
     # Whether they're student, faculty, or community
     TYPES = TYPES  # Need this so User.TYPES works later
     type = models.CharField(choices=TYPES, max_length=3, blank=False, default="COM")
-    # TODO: Add ManyToMany field of favorites
-
+    likedEvents = models.ManyToManyField('Event', blank=True, related_name="likedUsers")
 
 class Organization(models.Model):
     """ A model for a student org """

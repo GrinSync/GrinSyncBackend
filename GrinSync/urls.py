@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/likeEvent', apiViews.likeEvent, name = 'likeEvent'),
     path('api/upcoming', apiViews.getUpcoming, name = 'getUpcomming'),
     path('api/auth', tokenViews.obtain_auth_token),
+    path('auth/', include('django.contrib.auth.urls')),
     path('api/validate/login', apiViews.validateLogin, name = 'vallog'),
     path('api/validate', apiViews.validate, name = 'val'),
     path('api/create/user', apiViews.createUser, name = 'newUser'),

@@ -64,7 +64,7 @@ ROOT_URLCONF = 'GrinSync.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ['api/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -154,6 +154,7 @@ EMAIL_HOST = 'email-smtp.us-east-2.amazonaws.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 2587 #587
 EMAIL_TIMEOUT = 20
+DEFAULT_FROM_EMAIL = "info@grinsync.com"
 #EMAIL_HOST_USER in extra_settings
 #EMAIL_HOST_PASSWORD in extra_settings
 

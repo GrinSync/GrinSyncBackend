@@ -11,7 +11,6 @@ from django.dispatch import receiver
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django_rest_passwordreset.signals import reset_password_token_created
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -241,49 +240,49 @@ def getEventsInDay(request):
 
 
 
-@receiver(reset_password_token_created)
-def passwordResetTokenCreated(sender, instance, reset_password_token, *args, **kwargs):
-    """ Generates a token for a password reset link and sends it out to the user that requested it """
+# @receiver(reset_password_token_created)
+# def passwordResetTokenCreated(sender, instance, reset_password_token, *args, **kwargs):
+#     """ Generates a token for a password reset link and sends it out to the user that requested it """
 
-    emailPlaintextMessage = f"""Open the link to reset your password: {instance.request.build_absolute_uri(
-        'http://localhost:8000/password_change/?token=')}{reset_password_token.key}"""
+#     emailPlaintextMessage = f"""Open the link to reset your password: {instance.request.build_absolute_uri(
+#         'http://localhost:8000/password_change/?token=')}{reset_password_token.key}"""
 
-    print(emailPlaintextMessage)
+#     print(emailPlaintextMessage)
 
-    send_mail(
-        # title:
-        "Password Reset for GrinSync",
-        # message:
-        emailPlaintextMessage,
-        # from:
-        "password_reset@grinsync.com",
-        # to:
-        [reset_password_token.user.email],
-        fail_silently=False,
-    )
+#     send_mail(
+#         # title:
+#         "Password Reset for GrinSync",
+#         # message:
+#         emailPlaintextMessage,
+#         # from:
+#         "password_reset@grinsync.com",
+#         # to:
+#         [reset_password_token.user.email],
+#         fail_silently=False,
+#     )
 
-def passwordChange(request):
-    token = request.GET.get("token", None)
-    return render(request, 'password_change.html', {'token':token})
+# def passwordChange(request):
+#     token = request.GET.get("token", None)
+#     return render(request, 'password_change.html', {'token':token})
 
 
-## In case we need later, here was an attempt at a custom login & token return implementation
-# from django.contrib.auth import authenticate
-# from django.views.decorators.csrf import csrf_exempt
-# from rest_framework.authtoken.models import Token
+# ## In case we need later, here was an attempt at a custom login & token return implementation
+# # from django.contrib.auth import authenticate
+# # from django.views.decorators.csrf import csrf_exempt
+# # from rest_framework.authtoken.models import Token
 
-# @csrf_exempt
-# def apiLogin(request):
-#     """ Inital login API call - POST accepts 'username' and 'password' and returns a token"""
-#     username = request.POST.get("username", None)
-#     password = request.POST.get("password", None)
+# # @csrf_exempt
+# # def apiLogin(request):
+# #     """ Inital login API call - POST accepts 'username' and 'password' and returns a token"""
+# #     username = request.POST.get("username", None)
+# #     password = request.POST.get("password", None)
 
-#     # TODO: More Login validation? - check what did on RoosRun and mLab site
-#     user = authenticate(request, username=username, password=password)
+# #     # TODO: More Login validation? - check what did on RoosRun and mLab site
+# #     user = authenticate(request, username=username, password=password)
 
-#     if user:
-#         token = Token.objects.get_or_create(user=user) # token, created
-#         print(token)
-#         return HttpResponse({'token': token[0]})
-#     else:
-#         return HttpResponse({'error': 'Invalid credentials'}, status=401)
+# #     if user:
+# #         token = Token.objects.get_or_create(user=user) # token, created
+# #         print(token)
+# #         return HttpResponse({'token': token[0]})
+# #     else:
+# #         return HttpResponse({'error': 'Invalid credentials'}, status=401)

@@ -9,11 +9,11 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-# pylint: disable=unused-import
+# pylint: disable=unused-import, wildcard-import, unused-wildcard-import
 
 import os
 from pathlib import Path
-from .extra_settings import SECRET_KEY, DEBUG
+from .extra_settings import *
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -47,7 +47,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework.authtoken',
     'api',
-
 ]
 
 MIDDLEWARE = [
@@ -148,3 +147,13 @@ REST_FRAMEWORK = {
 CSRF_USE_SESSIONS = False
 
 CSRF_TRUSTED_ORIGINS = ["https://grinsync.com"] # Needed for admin site for some reason?
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'email-smtp.us-east-2.amazonaws.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 2587 #587
+EMAIL_TIMEOUT = 20
+#EMAIL_HOST_USER in extra_settings
+#EMAIL_HOST_PASSWORD in extra_settings
+

@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from rest_framework.authtoken import views as tokenViews
 from api import views as apiViews
 
@@ -29,7 +29,6 @@ urlpatterns = [
     path('api/likeEvent', apiViews.likeEvent, name = 'likeEvent'),
     path('api/upcoming', apiViews.getUpcoming, name = 'getUpcomming'),
     path('api/auth', tokenViews.obtain_auth_token),
-    # path('api/auth', apiViews.apiLogin, name = 'auth'),
     path('api/validate/login', apiViews.validateLogin, name = 'vallog'),
     path('api/validate', apiViews.validate, name = 'val'),
     path('api/create/user', apiViews.createUser, name = 'newUser'),

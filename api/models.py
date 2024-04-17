@@ -45,7 +45,7 @@ class Event(models.Model):
 
     # For repeating events
     nextRepeat = models.OneToOneField('Event', blank = True, null=True, related_name="previousRepeat",
-                                      on_delete=models.DO_NOTHING)
+                                      on_delete=models.SET_NULL)
 
     def save(self, *args, **kwargs):
         if self.host is None and self.parentOrg is None:

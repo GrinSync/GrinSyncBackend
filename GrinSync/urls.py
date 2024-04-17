@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/getUser', apiViews.getUser, name = 'getUser'),
     path('api/getEvent', apiViews.getEvent, name = 'getEvent'),
     path('api/getAll', apiViews.getAll, name = 'getAll'),
+    path('api/getCreatedEvents', apiViews.getAllCreated, name = 'getAll'),
     path('api/getLikedEvents', apiViews.getlikedEvents, name = 'getLikedEvents'),
     path('api/likeEvent', apiViews.likeEvent, name = 'likeEvent'),
     path('api/editEvent', apiViews.editEvent, name = 'likeEvent'),

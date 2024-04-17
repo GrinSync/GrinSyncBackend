@@ -209,6 +209,14 @@ def getAll(request):
     return JsonResponse(eventsJson.data, safe=False)  #returns the info that the user needs in JSON form
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def getAllCreated(request):
+    """ Return all the info for all events. """
+    events = request.user.usersEvents
+    eventsJson = serializers.EventSerializer(events, many = True) #turns info into a string
+    return JsonResponse(eventsJson.data, safe=False)  #returns the info that the user needs in JSON form
+
+@api_view(['GET'])
 def getUpcoming(request):
     """ Return all the info for upcoming events. """
     today = datetime.today().replace(minute=0) # assigns today's date to a variable

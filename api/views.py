@@ -213,6 +213,7 @@ def getAll(request):
 def getAllCreated(request):
     """ Return all the info for all events. """
     events = request.user.usersEvents
+    events = events.order_by('-start')
     eventsJson = serializers.EventSerializer(events, many = True) #turns info into a string
     return JsonResponse(eventsJson.data, safe=False)  #returns the info that the user needs in JSON form
 

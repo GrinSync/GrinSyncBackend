@@ -270,7 +270,7 @@ def getlikedEvents(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated]) # Make sure user is logged in
-def editEvent(request): # TODO: Test this more thoroughly 
+def editEvent(request): # TODO: Test this more thoroughly
     """ Edits the fields on an event. Takes: id (of event) """
     eid = request.POST.get("id", "")
     try:
@@ -360,21 +360,28 @@ def editEvent(request): # TODO: Test this more thoroughly
 @permission_classes([IsAuthenticated]) #PLUS the user should have created the event
 def deleteEvent(request):
     """ Delete an event. """
-    eid = request.DELETE.get("id","") 
+    eid = request.POST.get("id", "")
     try:
-        event = Event.objects.get(pk = eid) 
+        event = Event.objects.get(pk = eid)
     except ObjectDoesNotExist:
         return HttpResponse(f"Event with id '{eid}' does not exist", status = 404)
     except ValueError:
         return HttpResponse("No id provided", status = 404)
-    
+
     #check that request.user = event.host are the same before deleting the vevent
-    if(request.user == event.host):
-        event.delete()
-        eventJson = serializers.EventSerializer(event)
+    if request.user == event.host:
+        if event.previousRepeat is not None: # Nothing to do if it's the first event (also, it would handle
+                                # it just fine if we didn't do this for the last event either, but whatever)
+            prevEvent = event.previousRepeat
+            prevEvent.nextRepeat = event.nextRepeat
+            event.delete() # Need this order otherwise the 1-to-1 field doesn't allow it
+            prevEvent.save()
+        else:
+            event.delete()
     else:
         return HttpResponse("This event can't be deleted because user is not the event's host.", status = 404)
-    return JsonResponse(eventJson.data, safe=False, status = 200)
+
+    return JsonResponse("Success", safe=False, status = 200)
 
 
 ## In case we need later, here was an attempt at a custom login & token return implementation

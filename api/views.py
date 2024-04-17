@@ -347,6 +347,25 @@ def editEvent(request): # TODO: Test this more thoroughly
 
     return JsonResponse(firstEventpk, safe=False, status=200)
 
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated]) #PLUS the user should have created the event
+def deleteEvent(request):
+    """ Delete an event. """
+    eid = request.DELETE.get("id","") 
+    try:
+        event = Event.objects.get(pk = eid) 
+    except ObjectDoesNotExist:
+        return HttpResponse(f"Event with id '{eid}' does not exist", status = 404)
+    except ValueError:
+        return HttpResponse("No id provided", status = 404)
+    
+    #check that request.user = event.host are the same before deleting the vevent
+
+    event.delete()
+    eventJson = serializers.EventSerializer(event)
+    return JsonResponse(eventJson.data, safe=False, status = 200)
+
+
 ## In case we need later, here was an attempt at a custom login & token return implementation
 # from django.contrib.auth import authenticate
 # from django.views.decorators.csrf import csrf_exempt

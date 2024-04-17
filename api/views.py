@@ -360,9 +360,11 @@ def deleteEvent(request):
         return HttpResponse("No id provided", status = 404)
     
     #check that request.user = event.host are the same before deleting the vevent
-
-    event.delete()
-    eventJson = serializers.EventSerializer(event)
+    if(request.user == event.host):
+        event.delete()
+        eventJson = serializers.EventSerializer(event)
+    else:
+        return HttpResponse("This event can't be deleted because user is not the event's host.", status = 404)
     return JsonResponse(eventJson.data, safe=False, status = 200)
 
 

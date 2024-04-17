@@ -244,7 +244,7 @@ def likeEvent(request):
         return HttpResponse(f"Event with id '{eid}' does not exist", status = 404)
     except ValueError:
         return HttpResponse("No id provided", status = 404)
-    
+
     user = request.user
     user.likedEvents.add(event)
     user.save()
@@ -258,6 +258,94 @@ def getlikedEvents(request):
     user = request.user
     eventJson = serializers.EventSerializer(user.likedEvents.all(), many = True)
     return JsonResponse(eventJson.data, safe=False, status=200)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def editEvent(request): # TODO: Test this more thoroughly 
+    """ Edits the fields on an event. Takes: id (of event) """
+    eid = request.POST.get("id", "")
+    try:
+        event = Event.objects.get(pk = eid)
+    except ObjectDoesNotExist:
+        return HttpResponse(f"Event with id '{eid}' does not exist", status = 404)
+    except ValueError:
+        return HttpResponse("No id provided", status = 404)
+
+    # Update the start and end times
+    newStart = request.POST.get("start", None)
+    newEnd = request.POST.get("end", None)
+    if newStart:
+        try:
+            startDT = datetime.strptime(newStart, "%Y-%m-%d %H:%M:%S.%f")
+        except ValueError:
+            return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
+                                    safe=False, status = 400)
+    else:
+        startDT = event.start
+
+    if newEnd:
+        try:
+            endDT = datetime.strptime(newEnd, "%Y-%m-%d %H:%M:%S.%f")
+        except ValueError:
+            return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
+                                    safe=False, status = 400)
+    else:
+        endDT = event.end
+
+    try:
+        assert event.start < event.end
+    except AssertionError:
+        return JsonResponse({'error' : "Invalid DateTime: your event start is after the end"},
+                                safe=False, status = 400)
+
+    startOffset = startDT - event.start
+    endOffset = endDT - event.end
+    newLocation = request.POST.get("location", None)
+    newTitle = request.POST.get("title", None)
+    newDescription = request.POST.get("description", None)
+    newStudentsOnly = request.POST.get("studentsOnly", None)
+    newTags = request.POST.get("tags", None)
+    newRepeatEnd = request.POST.get("repeatDate", None)
+    newRepeatEnd = datetime.strptime(newRepeatEnd, "%Y-%m-%d %H:%M:%S.%f").replace(hour=23, minute=59)
+
+    firstEventpk = event.pk
+    while event:
+        nextEvent = event.nextRepeat
+        # Allow users to cut off the repeat # TODO: Add the ability to extend the repeat
+        if newRepeatEnd:
+            if event.start <= newRepeatEnd:
+                event.delete()
+                event = nextEvent
+                continue
+
+        # Update the start and end times
+        event.start = event.start + startOffset
+        event.end = event.end + endOffset
+
+        # Update the location
+        if newLocation:
+            event.location = newLocation
+
+        # Update the title
+        if newTitle:
+            event.title = newTitle
+
+        # Update the description
+        if newDescription:
+            event.description = newDescription
+
+        # Update studentsOnly
+        if newStudentsOnly:
+            event.studentsOnly = newStudentsOnly.lower() in ['true', '1', 't', 'y', 'yes']
+
+        # Update the tags
+        if newTags:
+            event.tags = newTags
+
+        event.save()
+        event = nextEvent
+
+    return JsonResponse(firstEventpk, safe=False, status=200)
 
 ## In case we need later, here was an attempt at a custom login & token return implementation
 # from django.contrib.auth import authenticate

@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/getAll', apiViews.getAll, name = 'getAll'),
     path('api/getLikedEvents', apiViews.getlikedEvents, name = 'getLikedEvents'),
     path('api/likeEvent', apiViews.likeEvent, name = 'likeEvent'),
+    path('api/editEvent', apiViews.editEvent, name = 'likeEvent'),
     path('api/upcoming', apiViews.getUpcoming, name = 'getUpcomming'),
     path('api/auth', tokenViews.obtain_auth_token),
     path('auth/', include('django.contrib.auth.urls')),

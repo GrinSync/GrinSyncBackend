@@ -99,8 +99,8 @@ def createEvent(request):
     start = request.POST.get("start", None)
     end = request.POST.get("end", None)
 
-    repeatDays = request.POST.get("repeatingDays", 0)
-    repeatMonths = request.POST.get("repeatingMonths", 0)
+    repeatDays = int(request.POST.get("repeatingDays", 0))
+    repeatMonths = int(request.POST.get("repeatingMonths", 0))
     repeatEnd = request.POST.get("repeatDate", None)
 
     # Check that all of the required fields were provided
@@ -137,7 +137,7 @@ def createEvent(request):
                                 safe=False, status = 400)
 
         repeatEnd = datetime.strptime(repeatEnd, "%Y-%m-%d %H:%M:%S.%f").replace(hour=23, minute=59)
-        offset = relativedelta.relativedelta(days=int(repeatDays), months=int(repeatMonths))
+        offset = relativedelta.relativedelta(days=repeatDays, months=repeatMonths)
         firstEvent = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
                                     location = location, start = startDT, end = endDT,
                                     description = description, studentsOnly =studentsOnly,

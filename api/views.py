@@ -418,13 +418,15 @@ def editEvent(request): # TODO: Test this more thoroughly
     newStudentsOnly = request.POST.get("studentsOnly", None)
     newTags = request.POST.get("tags", None)
     newRepeatEnd = request.POST.get("repeatDate", None)
-    newRepeatEnd = datetime.strptime(newRepeatEnd, "%Y-%m-%d %H:%M:%S.%f").replace(hour=23, minute=59)
-
+    if newRepeatEnd:
+        newRepeatEnd = datetime.strptime(newRepeatEnd, "%Y-%m-%d %H:%M:%S.%f").replace(hour=23, minute=59)
+            
     firstEventpk = event.pk
     while event:
         nextEvent = event.nextRepeat
         # Allow users to cut off the repeat # TODO: Add the ability to extend the repeat
         if newRepeatEnd:
+            newRepeatEnd = datetime.strptime(newRepeatEnd, "%Y-%m-%d %H:%M:%S.%f").replace(hour=23, minute=59)
             if event.start <= newRepeatEnd:
                 event.delete()
                 event = nextEvent
@@ -457,7 +459,7 @@ def editEvent(request): # TODO: Test this more thoroughly
         event.save()
         event = nextEvent
 
-    return JsonResponse(firstEventpk, safe=False, status=200)
+    return JsonResponse({"id":firstEventpk}, safe=False, status=200)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated]) #PLUS the user should have created the event

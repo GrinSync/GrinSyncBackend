@@ -99,9 +99,13 @@ def createEvent(request):
     start = request.POST.get("start", None)
     end = request.POST.get("end", None)
 
-    repeatDays = int(request.POST.get("repeatingDays", 0))
-    repeatMonths = int(request.POST.get("repeatingMonths", 0))
-    repeatEnd = request.POST.get("repeatDate", None)
+    try:
+        repeatDays = int(request.POST.get("repeatingDays", 0))
+        repeatMonths = int(request.POST.get("repeatingMonths", 0))
+        repeatEnd = request.POST.get("repeatDate", None)
+    except ValueError:
+        return JsonResponse({'error' : 'Value Error: Your repeatingDays or repeatingMonths are not integers'},
+                                safe=False, status = 400)
 
     # Check that all of the required fields were provided
     if not (title and location and studentsOnly and start):
@@ -177,7 +181,7 @@ def getEvent(request):
     """ Return all the info for an event. Takes: id """
     eid = request.GET.get("id", "")
     event = Event.objects.get(pk = eid)
-    eventJson = serializers.EventSerializer(event)
+    eventJson = serializers.EventSerializer(event, context={'request': request})
     return JsonResponse(eventJson.data, safe=False)
 
 @api_view(['GET'])
@@ -194,7 +198,7 @@ def search(request): # TODO: decide if want one search for everything or differe
     if (not request.user.is_authenticated) or (request.user.type != "STU"):
         matching = matching.exclude(studentsOnly = True)
 
-    eventJson = serializers.EventSerializer(matching, many = True)
+    eventJson = serializers.EventSerializer(matching, many = True, context={'request': request})
     return JsonResponse(eventJson.data, safe=False)
 
 @api_view(['GET'])
@@ -205,7 +209,7 @@ def getAll(request):
     # We do this instead of the decorator for this function because everyone should be able to see public events
     if (not request.user.is_authenticated) or (request.user.type != "STU"):
         events = events.exclude(studentsOnly = True)
-    eventsJson = serializers.EventSerializer(events, many = True) #turns info into a string
+    eventsJson = serializers.EventSerializer(events, many = True, context={'request': request}) #turns info into a string
     return JsonResponse(eventsJson.data, safe=False)  #returns the info that the user needs in JSON form
 
 @api_view(['GET'])
@@ -214,7 +218,7 @@ def getAllCreated(request):
     """ Return all the info for all events. """
     events = request.user.usersEvents
     events = events.order_by('-start')
-    eventsJson = serializers.EventSerializer(events, many = True) #turns info into a string
+    eventsJson = serializers.EventSerializer(events, many = True, context={'request': request}) #turns info into a string
     return JsonResponse(eventsJson.data, safe=False)  #returns the info that the user needs in JSON form
 
 @api_view(['GET'])
@@ -227,7 +231,7 @@ def getUpcoming(request):
     if (not request.user.is_authenticated) or (request.user.type != "STU"):
         upcoming = upcoming.exclude(studentsOnly = True)
     upcoming = upcoming.order_by('start')
-    eventsJson = serializers.EventSerializer(upcoming, many = True) #turns info into a string
+    eventsJson = serializers.EventSerializer(upcoming, many = True, context={'request': request}) #turns info into a string
     return JsonResponse(eventsJson.data, safe=False)  #returns the info that the user needs in JSON form
 
 @api_view(['GET'])
@@ -239,7 +243,8 @@ def getEventsInDay(request):
     # hide student-only events if user is not a student
     if (not request.user.is_authenticated) or (request.user.type != "STU"):
         eventsInDay = eventsInDay.exclude(studentsOnly = True)
-    eventsJson = serializers.EventSerializer(eventsInDay, many = True) #turns info into a string
+    eventsJson = serializers.EventSerializer(eventsInDay, many = True,
+                                             context={'request': request}) #turns info into a string
     return JsonResponse(eventsJson.data, safe=False) #returns the info that the user needs in JSON form
 
 @api_view(['POST'])
@@ -257,7 +262,7 @@ def likeEvent(request):
     user = request.user
     user.likedEvents.add(event)
     user.save()
-    eventJson = serializers.EventSerializer(event)
+    eventJson = serializers.EventSerializer(event, context={'request': request})
     return JsonResponse(eventJson.data, safe=False, status=200)
 
 @api_view(['GET'])
@@ -265,7 +270,7 @@ def likeEvent(request):
 def getlikedEvents(request):
     """ Return all of a users liked events. """
     user = request.user
-    eventJson = serializers.EventSerializer(user.likedEvents.all(), many = True)
+    eventJson = serializers.EventSerializer(user.likedEvents.all(), many = True, context={'request': request})
     return JsonResponse(eventJson.data, safe=False, status=200)
 
 @api_view(['POST'])
@@ -276,9 +281,15 @@ def editEvent(request): # TODO: Test this more thoroughly
     try:
         event = Event.objects.get(pk = eid)
     except ObjectDoesNotExist:
-        return HttpResponse(f"Event with id '{eid}' does not exist", status = 404)
+        return JsonResponse({'error':f"Event with id '{eid}' does not exist"}, status = 404)
     except ValueError:
-        return HttpResponse("No id provided", status = 404)
+        return JsonResponse({'error':"No id provided"}, status = 404)
+
+    # Check that the user is a host
+    if request.user != event.host: #TODO: Add a check that the user part of the student org
+        return JsonResponse({'error':"This user is not the event's host"}, status = 403)
+
+    #TODO: Add extending event, which means need to store repeat info
 
     # Update the start and end times
     newStart = request.POST.get("start", None)
@@ -358,7 +369,7 @@ def editEvent(request): # TODO: Test this more thoroughly
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated]) #PLUS the user should have created the event
-def deleteEvent(request):
+def deleteEvent(request): #TODO: Update the repeat linked list if the others
     """ Delete an event. """
     eid = request.POST.get("id", "")
     try:

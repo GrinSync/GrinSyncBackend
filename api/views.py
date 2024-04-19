@@ -12,6 +12,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+import pytz
 
 
 # import django.middleware.csrf as csrf
@@ -36,6 +37,7 @@ def validateLogin(request):
 
 
 def sendEmailVerification(request, user):
+    """ Generate a token for and send a verification email to the provided user """
     confirmationToken = default_token_generator.make_token(user)
 
     send_mail(
@@ -67,7 +69,7 @@ def createUser(request):
 
     # Make sure that student and faculty accounts have grinnell.edu emails for validation
     if ((userType == "STU") or (userType == "FAL")) and (email.split('@')[1] != "grinnell.edu"):
-        return JsonResponse({'error' : 
+        return JsonResponse({'error' :
                              'Account Validation Error: Student or Staff account registered without grinnell.edu email'},
                                 safe=False, status = 422)
 
@@ -389,6 +391,9 @@ def editEvent(request): # TODO: Test this more thoroughly
     if newStart:
         try:
             startDT = datetime.strptime(newStart, "%Y-%m-%d %H:%M:%S.%f")
+            # Idk if this is ideal but whatever. We should prob be making the front end send their timezone
+            if startDT.tzinfo is None:
+                startDT = startDT.replace(tzinfo=pytz.timezone('America/Chicago'))
         except ValueError:
             return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
                                     safe=False, status = 400)
@@ -398,6 +403,8 @@ def editEvent(request): # TODO: Test this more thoroughly
     if newEnd:
         try:
             endDT = datetime.strptime(newEnd, "%Y-%m-%d %H:%M:%S.%f")
+            if endDT.tzinfo is None:
+                endDT = endDT.replace(tzinfo=pytz.timezone('America/Chicago'))
         except ValueError:
             return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
                                     safe=False, status = 400)
@@ -420,7 +427,7 @@ def editEvent(request): # TODO: Test this more thoroughly
     newRepeatEnd = request.POST.get("repeatDate", None)
     if newRepeatEnd:
         newRepeatEnd = datetime.strptime(newRepeatEnd, "%Y-%m-%d %H:%M:%S.%f").replace(hour=23, minute=59)
-            
+
     firstEventpk = event.pk
     while event:
         nextEvent = event.nextRepeat

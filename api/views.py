@@ -313,6 +313,50 @@ def likeEvent(request):
     eventJson = serializers.EventSerializer(event, context={'request': request})
     return JsonResponse(eventJson.data, safe=False, status=200)
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def unlikeEvent(request):
+    """ Adds an event to a user's like events list. Takes: id (of event) """
+    eid = request.POST.get("id", "")
+    try:
+        event = Event.objects.get(pk = eid)
+    except ObjectDoesNotExist:
+        return HttpResponse(f"Event with id '{eid}' does not exist", status = 404)
+    except ValueError:
+        return HttpResponse("No id provided", status = 404)
+
+    user = request.user
+    user.likedEvents.remove(event)
+    user.save()
+    eventJson = serializers.EventSerializer(event, context={'request': request})
+    return JsonResponse(eventJson.data, safe=False, status=200)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def toggleLikedEvent(request):
+    """ Adds an event to a user's like events list. Takes: id (of event) """
+    eid = request.POST.get("id", "")
+    try:
+        event = Event.objects.get(pk = eid)
+    except ObjectDoesNotExist:
+        return HttpResponse(f"Event with id '{eid}' does not exist", status = 404)
+    except ValueError:
+        return HttpResponse("No id provided", status = 404)
+
+    user = request.user
+    if event in user.likedEvents.all():
+        user.likedEvents.remove(event)
+    else:
+        user.likedEvents.add(event)
+    user.save()
+    eventJson = serializers.EventSerializer(event, context={'request': request})
+    return JsonResponse(eventJson.data, safe=False, status=200)
+
+
+
+
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated]) # Make sure user is logged in
 def getlikedEvents(request):

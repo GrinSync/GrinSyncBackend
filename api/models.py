@@ -47,7 +47,7 @@ class Event(models.Model):
     nextRepeat = models.OneToOneField('Event', blank = True, null=True, related_name="previousRepeat",
                                       on_delete=models.SET_NULL)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs): # pylint: disable=unused-argument
         if self.host is None and self.parentOrg is None:
             raise ValidationError("Events must have a host or hosting org")
 

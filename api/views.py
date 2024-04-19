@@ -5,10 +5,14 @@ from django.db import IntegrityError
 from django.http import HttpResponse, JsonResponse
 # from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+
 
 # import django.middleware.csrf as csrf
 # from rest_framework.views import APIView
@@ -30,6 +34,20 @@ def validateLogin(request):
     """ Check the login worked """
     return HttpResponse("Success!", content_type="text/html")
 
+
+def sendEmailVerification(request, user):
+    confirmationToken = default_token_generator.make_token(user)
+
+    send_mail(
+        "GrinSync Email Verification",
+        ("Welcome to GrinSync! Please click here to verify your email: "
+            f"{request.build_absolute_uri('/api/verifyUser')}?token={confirmationToken}&tempId={user.pk}"),
+        "register@grinsync.com",
+        [user.email],
+        fail_silently=False,
+    )
+    return
+
 @api_view(['POST'])
 def createUser(request):
     """ Creates a new user in the database """
@@ -47,19 +65,49 @@ def createUser(request):
         return JsonResponse({'error' : 'Integrity Error: Not all required fields were provided'},
                                 safe=False, status = 400)
 
+    # Make sure that student and faculty accounts have grinnell.edu emails for validation
+    if ((userType == "STU") or (userType == "FAL")) and (email.split('@')[1] != "grinnell.edu"):
+        return JsonResponse({'error' : 
+                             'Account Validation Error: Student or Staff account registered without grinnell.edu email'},
+                                safe=False, status = 422)
+
     # Actually interact with the database and create the user
     try:
         user = User.objects.create_user(first_name = firstName, last_name = lastName,
                                         type = userType, email = email, username = email,
-                                        password = password)
+                                        password = password, is_active = False)
 
     # Since the database constraints are checked at creation, make sure they all passed
     except IntegrityError:
+        # TODO: Check if same user exists but is just inactive. Don't leak info
         return JsonResponse({'error' : 'Integrity Error: It\'s possible that username is already in use'},
                                 safe=False, status = 400)
 
+    sendEmailVerification(request, user)
+
     # Return the newly created user's id. Although the status code is probably more important
     return JsonResponse({'id' : user.id}, safe=False, status = 200)
+
+
+@api_view(['GET'])
+def verifyUser(request):
+    """ Is called after we've verified their email; Moves a user to an active user status """
+    userId = request.query_params.get('tempId', '')
+    confirmationToken = request.query_params.get('token', '')
+    try:
+        user = User.objects.get(pk=userId)
+    except ObjectDoesNotExist:
+        return render(request, "registration/email_verification_error.html", {"errorMessage":
+                'User not found', 
+            }, status=400)
+    if not default_token_generator.check_token(user, confirmationToken):
+        return render(request, "registration/email_verification_error.html", {"errorMessage":
+                'Token is invalid or expired. Please request another confirmation email by signing in.', 
+            }, status=400)
+    user.is_active = True
+    user.save()
+    return render(request, "registration/email_verification_confirmation.html")
+    # return HttpResponse('Email successfully confirmed', status=200)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

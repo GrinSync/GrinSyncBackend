@@ -36,5 +36,6 @@ urlpatterns = [
     path('api/validate/login', apiViews.validateLogin, name = 'vallog'),
     path('api/validate', apiViews.validate, name = 'val'),
     path('api/create/user', apiViews.createUser, name = 'newUser'),
+    path('api/verifyUser', apiViews.verifyUser, name = 'newUser'),
     path('api/create/event', apiViews.createEvent, name = 'newEvent'),
 ]

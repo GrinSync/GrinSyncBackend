@@ -15,6 +15,7 @@ class EventSerializer(serializers.ModelSerializer):
 
     # Create a custom method field
     isFavorited = serializers.SerializerMethodField('_isFavorite')
+    hostName = serializers.SerializerMethodField('_hostName')
 
     # Use this method for the custom field
     def _isFavorite(self, obj):
@@ -23,6 +24,11 @@ class EventSerializer(serializers.ModelSerializer):
             if obj.id in request.user.likedEvents.values_list('pk', flat=True):
                 return True
         return False
+
+    def _hostName(self, obj):
+        if obj.parentOrg is not None:
+            return obj.parentOrg.name
+        return f"{obj.host.first_name} {obj.host.last_name}"
 
     class Meta:
         """ Meta """

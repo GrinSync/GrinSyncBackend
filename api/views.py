@@ -499,8 +499,9 @@ def deleteEvent(request): #TODO: Update the repeat linked list if the others
 
     #check that request.user = event.host are the same before deleting the vevent
     if request.user == event.host:
-        if event.previousRepeat is not None: # Nothing to do if it's the first event (also, it would handle
-                                # it just fine if we didn't do this for the last event either, but whatever)
+        if hasattr(event, 'previousRepeat') and event.previousRepeat is not None:
+                        # Nothing to do if it's the first event (also, it would handle
+                        # it just fine if we didn't do this for the last event either, but whatever)
             prevEvent = event.previousRepeat
             prevEvent.nextRepeat = event.nextRepeat
             event.delete() # Need this order otherwise the 1-to-1 field doesn't allow it

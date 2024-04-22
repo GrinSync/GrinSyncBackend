@@ -21,6 +21,8 @@ import pytz
 from api.models import Event, User, Organization
 import api.serializers as serializers
 
+CST=pytz.timezone('America/Chicago')
+
 # Maybe TODO: look into class based views?
 
 @ensure_csrf_cookie
@@ -399,7 +401,7 @@ def editEvent(request): # TODO: Test this more thoroughly
                 return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
                                     safe=False, status = 400)
         if startDT.tzinfo is None:
-            startDT = startDT.replace(tzinfo=pytz.timezone('America/Chicago'))
+            startDT = CST.localize(startDT)
     else:
         startDT = event.start
 
@@ -413,7 +415,7 @@ def editEvent(request): # TODO: Test this more thoroughly
                 return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
                                     safe=False, status = 400)
         if endDT.tzinfo is None:
-            endDT = endDT.replace(tzinfo=pytz.timezone('America/Chicago'))
+            endDT = CST.localize(endDT)
     else:
         endDT = event.end
 
@@ -425,6 +427,7 @@ def editEvent(request): # TODO: Test this more thoroughly
 
     startOffset = startDT - event.start
     endOffset = endDT - event.end
+    print(startOffset, " ", endOffset)
     newLocation = request.POST.get("location", None)
     newTitle = request.POST.get("title", None)
     newDescription = request.POST.get("description", None)
@@ -432,7 +435,7 @@ def editEvent(request): # TODO: Test this more thoroughly
     newTags = request.POST.get("tags", None)
     newRepeatEnd = request.POST.get("repeatDate", None)
     if newRepeatEnd:
-        try: 
+        try:
             newRepeatEnd = datetime.strptime(newRepeatEnd, "%Y-%m-%d %H:%M:%S.%f").replace(hour=23, minute=59)
         except ValueError:
             try:
@@ -441,7 +444,7 @@ def editEvent(request): # TODO: Test this more thoroughly
                 return JsonResponse({'error' : "Invalid DateTime: check your 'repeatEnd' field"},
                                     safe=False, status = 400)
         if newRepeatEnd.tzinfo is None:
-            newRepeatEnd = newRepeatEnd.replace(tzinfo=pytz.timezone('America/Chicago'))
+            newRepeatEnd = CST.localize(newRepeatEnd)
 
     firstEventpk = event.pk
     while event:

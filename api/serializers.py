@@ -16,6 +16,7 @@ class EventSerializer(serializers.ModelSerializer):
     # Create a custom method field
     isFavorited = serializers.SerializerMethodField('_isFavorite')
     hostName = serializers.SerializerMethodField('_hostName')
+    prevRepeat = serializers.SerializerMethodField('_prevRepeat')
 
     # Use this method for the custom field
     def _isFavorite(self, obj):
@@ -29,6 +30,12 @@ class EventSerializer(serializers.ModelSerializer):
         if obj.parentOrg is not None:
             return obj.parentOrg.name
         return f"{obj.host.first_name} {obj.host.last_name}"
+
+    def _prevRepeat(self, obj):
+        if(hasattr(obj, 'previousRepeat')):
+            return obj.previousRepeat.id
+        return None
+
 
     class Meta:
         """ Meta """

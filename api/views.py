@@ -392,27 +392,33 @@ def editEvent(request): # TODO: Test this more thoroughly
         try:
             startDT = datetime.strptime(newStart, "%Y-%m-%d %H:%M:%S.%f")
             # Idk if this is ideal but whatever. We should prob be making the front end send their timezone
-            if startDT.tzinfo is None:
-                startDT = startDT.replace(tzinfo=pytz.timezone('America/Chicago'))
         except ValueError:
-            return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
+            try:
+                startDT = datetime.strptime(newStart, '%Y-%m-%dT%H:%M:%S%z')
+            except ValueError:
+                return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
                                     safe=False, status = 400)
+        if startDT.tzinfo is None:
+            startDT = startDT.replace(tzinfo=pytz.timezone('America/Chicago'))
     else:
         startDT = event.start
 
     if newEnd:
         try:
             endDT = datetime.strptime(newEnd, "%Y-%m-%d %H:%M:%S.%f")
-            if endDT.tzinfo is None:
-                endDT = endDT.replace(tzinfo=pytz.timezone('America/Chicago'))
         except ValueError:
-            return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
+            try:
+                endDT = datetime.strptime(newEnd, '%Y-%m-%dT%H:%M:%S%z')
+            except ValueError:
+                return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
                                     safe=False, status = 400)
+        if endDT.tzinfo is None:
+            endDT = endDT.replace(tzinfo=pytz.timezone('America/Chicago'))
     else:
         endDT = event.end
 
     try:
-        assert event.start < event.end
+        assert startDT < endDT
     except AssertionError:
         return JsonResponse({'error' : "Invalid DateTime: your event start is after the end"},
                                 safe=False, status = 400)
@@ -426,14 +432,22 @@ def editEvent(request): # TODO: Test this more thoroughly
     newTags = request.POST.get("tags", None)
     newRepeatEnd = request.POST.get("repeatDate", None)
     if newRepeatEnd:
-        newRepeatEnd = datetime.strptime(newRepeatEnd, "%Y-%m-%d %H:%M:%S.%f").replace(hour=23, minute=59)
+        try: 
+            newRepeatEnd = datetime.strptime(newRepeatEnd, "%Y-%m-%d %H:%M:%S.%f").replace(hour=23, minute=59)
+        except ValueError:
+            try:
+                newRepeatEnd = datetime.strptime(newRepeatEnd, '%Y-%m-%dT%H:%M:%S%z')
+            except ValueError:
+                return JsonResponse({'error' : "Invalid DateTime: check your 'repeatEnd' field"},
+                                    safe=False, status = 400)
+        if newRepeatEnd.tzinfo is None:
+            newRepeatEnd = newRepeatEnd.replace(tzinfo=pytz.timezone('America/Chicago'))
 
     firstEventpk = event.pk
     while event:
         nextEvent = event.nextRepeat
         # Allow users to cut off the repeat # TODO: Add the ability to extend the repeat
         if newRepeatEnd:
-            newRepeatEnd = datetime.strptime(newRepeatEnd, "%Y-%m-%d %H:%M:%S.%f").replace(hour=23, minute=59)
             if event.start <= newRepeatEnd:
                 event.delete()
                 event = nextEvent

@@ -1,5 +1,6 @@
 # pylint: disable=unused-argument
 from datetime import datetime, timedelta
+from smtplib import SMTPException
 from dateutil import relativedelta
 from django.db import IntegrityError
 from django.http import HttpResponse, JsonResponse
@@ -21,7 +22,7 @@ import pytz
 from api.models import Event, User, Organization
 import api.serializers as serializers
 
-CST=pytz.timezone('America/Chicago')
+CST = pytz.timezone('America/Chicago')
 
 # Maybe TODO: look into class based views?
 
@@ -70,7 +71,7 @@ def createUser(request):
                                 safe=False, status = 400)
 
     # Make sure that student and faculty accounts have grinnell.edu emails for validation
-    if ((userType == "STU") or (userType == "FAL")) and (email.split('@')[1] != "grinnell.edu"):
+    if ((userType == "STU") or (userType == "FAL")) and (email.split('@')[1].lower() != "grinnell.edu"):
         return JsonResponse({'error' :
                              'Account Validation Error: Student or Staff account registered without grinnell.edu email'},
                                 safe=False, status = 422)
@@ -87,7 +88,11 @@ def createUser(request):
         return JsonResponse({'error' : 'Integrity Error: It\'s possible that username is already in use'},
                                 safe=False, status = 400)
 
-    sendEmailVerification(request, user)
+    try:
+        sendEmailVerification(request, user)
+    except SMTPException:
+        user.delete()
+        return JsonResponse({'error' : "Email failed to send, please try registering again"}, safe=False, status = 400)
 
     # Return the newly created user's id. Although the status code is probably more important
     return JsonResponse({'id' : user.id}, safe=False, status = 200)
@@ -142,7 +147,7 @@ def createEvent(request):
 
     # Get the info from the request, and provide default values if the keys are not found
     # The POST.get here is because we've sent a post request so we need to look for the info in that format
-    title = request.POST.get("title", None)
+    title = request.POST.get("title", None) # TODO: Filter for profanity
     description = request.POST.get("description", "") # Optional
     orgID = request.POST.get("org_id", "") # Optional
     location = request.POST.get("location", None)
@@ -371,7 +376,7 @@ def getlikedEvents(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated]) # Make sure user is logged in
-def editEvent(request): # TODO: Test this more thoroughly
+def editEvent(request):
     """ Edits the fields on an event. Takes: id (of event) """
     eid = request.POST.get("id", "")
     try:
@@ -487,7 +492,7 @@ def editEvent(request): # TODO: Test this more thoroughly
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated]) #PLUS the user should have created the event
-def deleteEvent(request): #TODO: Update the repeat linked list if the others
+def deleteEvent(request):
     """ Delete an event. """
     eid = request.POST.get("id", "")
     try:

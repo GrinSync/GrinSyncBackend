@@ -41,11 +41,16 @@ class Event(models.Model):
 
     # Other stuff we might want to record about events
     studentsOnly = models.BooleanField(blank = False) # We'll store this as its own field for later
-    tags = models.JSONField(blank = True, null = True)
+    tags = models.JSONField(blank = True, null = True) # TODO: we can make this many-to-many
 
     # For repeating events
     nextRepeat = models.OneToOneField('Event', blank = True, null=True, related_name="previousRepeat",
                                       on_delete=models.SET_NULL)
+
+    # External Infomation
+    liveWhaleID = models.PositiveIntegerField(blank=True, null=True, unique=True)
+    # TODO: Contact or contact's email
+    # Also maybe geolocation info?
 
     def save(self, *args, **kwargs): # pylint: disable=unused-argument
         if self.host is None and self.parentOrg is None:

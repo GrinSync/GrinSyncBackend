@@ -153,4 +153,3 @@ EMAIL_TIMEOUT = 20
 DEFAULT_FROM_EMAIL = "info@grinsync.com"
 #EMAIL_HOST_USER in extra_settings
 #EMAIL_HOST_PASSWORD in extra_settings
-

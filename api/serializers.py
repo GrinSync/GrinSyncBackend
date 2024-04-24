@@ -32,7 +32,7 @@ class EventSerializer(serializers.ModelSerializer):
         return f"{obj.host.first_name} {obj.host.last_name}"
 
     def _prevRepeat(self, obj):
-        if(hasattr(obj, 'previousRepeat')):
+        if hasattr(obj, 'previousRepeat'):
             return obj.previousRepeat.id
         return None
 

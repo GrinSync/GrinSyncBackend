@@ -24,7 +24,7 @@ import api.serializers as serializers
 
 CST = pytz.timezone('America/Chicago')
 
-# Maybe TODO: look into class based views?
+# TODO: What happens if a non student creates a student only event? We prob let this happen, but can they edit it?
 
 @ensure_csrf_cookie
 @api_view(['GET'])

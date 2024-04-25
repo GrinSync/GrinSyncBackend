@@ -43,7 +43,8 @@ def scrapeCalendar(num_events = "false"):
     # tags = []
     # TODO: Collect all possible tags
 
-    for event in events:
+    for event in events: # TODO: Add filtering for intended audience (at least make sure it's not profs)
+                         # And by location. And add tags for student orgs
         title = event['title']
         startTime = datetime.datetime.strptime(event['date_utc'], "%Y-%m-%d %H:%M:%S")
         startTime = pytz.utc.localize(startTime)
@@ -77,7 +78,7 @@ def scrapeCalendar(num_events = "false"):
         if ('tabling' in title.lower()) or ('tabling' in description.lower()):
                         # Idk, is it possible some don't have a title? Prob not
             tags.append('Tabling')
-
+        tags = str(tags).replace('[','').replace(']','').replace("'",'')
 
         if not location:
             continue

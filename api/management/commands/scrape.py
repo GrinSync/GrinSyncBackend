@@ -1,10 +1,12 @@
 import datetime
 import json
-from django.db import IntegrityError
+import string
 import pytz
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.management.base import BaseCommand
 from requests import get
-from django.core.management.base import BaseCommand, CommandError
-from api.models import Event, User
+
+from api.models import Event, Tag, User
 
 CST = pytz.timezone('America/Chicago')
 
@@ -78,7 +80,8 @@ def scrapeCalendar(num_events = "false"):
         if ('tabling' in title.lower()) or ('tabling' in description.lower()):
                         # Idk, is it possible some don't have a title? Prob not
             tags.append('Tabling')
-        tags = str(tags).replace('[','').replace(']','').replace("'",'')
+        
+        # tags = str(tags).replace('[','').replace(']','').replace("'",'')
 
         if not location:
             continue
@@ -86,21 +89,27 @@ def scrapeCalendar(num_events = "false"):
         # print(f"{event['title']} is taking place at {location} at "
         #     f"{startTime.astimezone(CST).strftime('%H:%M')}-{endTime.astimezone(CST).strftime('%H:%M')}")
 
+
         try:
+            event = Event.objects.get(liveWhaleID = externalID)
+            if event.host != autoPopulateUser: # We want to avoid changing them if someone has claimed it
+                 continue
+        except ObjectDoesNotExist:
             event = Event.objects.create(host = autoPopulateUser, title = title,
                                     location = location, start = startTime, end = endTime,
                                     description = description, studentsOnly = False, # I'm going to assume thats
                                         # if it was on the college's public calendar, we don't need to hide it
                                         # but also I know not all are, so maybe find a clever way to do this
-                                    tags = tags, liveWhaleID = externalID)
-        except IntegrityError:
-            event = Event.objects.filter(liveWhaleID = externalID)
-            if not event.exists():
-                print("HMMM smthing weird")
-                continue
-            # Do we need to update or should we just skip them?
-            event.update(title = title, location = location, start = startTime, end = endTime,
-                        description = description, studentsOnly = False, tags = tags)
+                                    liveWhaleID = externalID)
+        event.tags.clear()
+        for tag in tags:
+            if 'sport' in tag:
+                tag = 'Sports'
+            tag = tag.replace('amp;','')
+            tag = string.capwords(tag)
+            tagObj, created = Tag.objects.get_or_create(name=tag)
+            event.tags.add(tagObj)
+        event.save()
 
 
 
@@ -116,4 +125,4 @@ class Command(BaseCommand):
         #parser.add_argument("poll_ids", nargs="+", type=int)
 
     def handle(self, *args, **options):
-        scrapeCalendar()
+        scrapeCalendar(20)

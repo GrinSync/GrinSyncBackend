@@ -19,7 +19,7 @@ import pytz
 # import django.middleware.csrf as csrf
 # from rest_framework.views import APIView
 # from rest_framework.response import Response
-from api.models import Event, User, Organization
+from api.models import Event, Tag, User, Organization
 import api.serializers as serializers
 
 CST = pytz.timezone('America/Chicago')
@@ -261,7 +261,17 @@ def search(request): # TODO: decide if want one search for everything or differe
 @api_view(['GET'])
 def getAll(request):
     """ Return all the info for all events. """
+    ## Do we want the calendar to update the tags by default?
+    # tags = request.GET.getlist("tags")
+    # if len(tags) == 0: # This setup lets us do the default by not sending anything. Can't set no tags tho
+    #     if request.user.is_authenticated: # If the user's logged in, use their defaults
+    #         tags = request.user.interestedTags.all()
+    #     else: # Otherwise, we'll use the universal defaults
+    #         tags = Tag.objects.filter(selectedDefault = True)
+
     events = Event.objects.all()
+    # events = events.filter(tags__in = tags)
+
     # Removes student-only events if user is not a student
     # We do this instead of the decorator for this function because everyone should be able to see public events
     if (not request.user.is_authenticated) or (request.user.type != "STU"):
@@ -281,9 +291,18 @@ def getAllCreated(request):
 @api_view(['GET'])
 def getUpcoming(request):
     """ Return all the info for upcoming events. """
+    tags = request.GET.getlist("tags")
+    if len(tags) == 0: # This setup lets us do the default by not sending anything. Can't set no tags tho
+        if request.user.is_authenticated: # If the user's logged in, use their defaults
+            tags = request.user.interestedTags.all()
+        else: # Otherwise, we'll use the universal defaults
+            tags = Tag.objects.filter(selectedDefault = True)
+
     today = datetime.today().replace(minute=0) # assigns today's date to a variable
     upcoming = Event.objects.filter(start__gte=today) # gets events with a starting date >= to today
-    upcoming = upcoming.exclude(start__gt = today + timedelta(weeks = 4)) # limits upcoming events a week out
+    upcoming = upcoming.exclude(start__gt = today + timedelta(weeks = 1)) # limits upcoming events a week out
+    upcoming = upcoming.filter(tags__in = tags)
+
     # hide student-only events if user is not a student
     if (not request.user.is_authenticated) or (request.user.type != "STU"):
         upcoming = upcoming.exclude(studentsOnly = True)
@@ -303,6 +322,14 @@ def getEventsInDay(request):
     eventsJson = serializers.EventSerializer(eventsInDay, many = True,
                                              context={'request': request}) #turns info into a string
     return JsonResponse(eventsJson.data, safe=False) #returns the info that the user needs in JSON form
+
+@api_view(['GET'])
+def getTags(request):
+    """ Return all the info for all events. """
+    tags = Tag.objects.all()
+    tagsJson = serializers.TagSerializer(tags, many = True) #turns info into a string
+    return JsonResponse(tagsJson.data, safe=False)  #returns the info that the user needs in JSON form
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated]) # Make sure user is logged in
@@ -360,11 +387,6 @@ def toggleLikedEvent(request):
     user.save()
     eventJson = serializers.EventSerializer(event, context={'request': request})
     return JsonResponse(eventJson.data, safe=False, status=200)
-
-
-
-
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated]) # Make sure user is logged in

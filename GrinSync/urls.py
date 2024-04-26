@@ -33,6 +33,7 @@ urlpatterns = [
     path('api/editEvent', apiViews.editEvent, name = 'editEvent'),
     path('api/deleteEvent', apiViews.deleteEvent, name = 'deleteEvent'),
     path('api/upcoming', apiViews.getUpcoming, name = 'getUpcomming'),
+    path('api/getTags', apiViews.getTags, name = 'getTags'),
     path('api/auth', tokenViews.obtain_auth_token),
     path('auth/', include('django.contrib.auth.urls')),
     path('api/validate/login', apiViews.validateLogin, name = 'vallog'),

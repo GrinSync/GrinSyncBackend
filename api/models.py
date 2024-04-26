@@ -11,6 +11,10 @@ TYPES = [
     (None, "-------"),
 ]
 
+def defaultTags():
+    """ Returns a list of the default tags we think users should have """
+    return Tag.objects.filter(selectedDefault = True)
+
 
 # Our basic user class. The AbstractUser class already implements names, email, & username/password
 class User(AbstractUser):
@@ -19,12 +23,16 @@ class User(AbstractUser):
     TYPES = TYPES  # Need this so User.TYPES works later
     type = models.CharField(choices=TYPES, max_length=3, blank=False, default="COM")
     likedEvents = models.ManyToManyField('Event', blank=True, related_name="likedUsers")
+    interestedTags = models.ManyToManyField('Tag', blank=True, default=defaultTags)
 
 class Organization(models.Model):
     """ A model for a student org """
     name = models.CharField(max_length = 64)
     studentLeaders = models.ManyToManyField(User, blank=False, related_name='childOrgs')
 
+class Tag(models.Model):
+    name = models.CharField(max_length=32, unique=True)
+    selectedDefault = models.BooleanField(default=False)
 
 # The model for events. This will probably be the main model we're dealing with
 class Event(models.Model):
@@ -41,7 +49,8 @@ class Event(models.Model):
 
     # Other stuff we might want to record about events
     studentsOnly = models.BooleanField(blank = False) # We'll store this as its own field for later
-    tags = models.JSONField(blank = True, null = True) # TODO: we can make this many-to-many
+    tags = models.ManyToManyField(Tag, blank=True)
+    # tags = models.JSONField(blank = True, null = True) # TODO: we can make this many-to-many
 
     # For repeating events
     nextRepeat = models.OneToOneField('Event', blank = True, null=True, related_name="previousRepeat",

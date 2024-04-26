@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Event
+from .models import Tag, User, Event
 
 class UserSerializer(serializers.ModelSerializer):
     """ Serializes a User model """
@@ -42,10 +42,22 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = '__all__'
 
-    # def to_representation(self, instance):
-    #     reps = super().to_representation(instance)
-    #     print(reps)
-    #     return reps
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        tags = []
+        for tagPk in data['tags']:
+            tags.append(Tag.objects.get(pk=tagPk).name)
 
-    # def __init__(self, instance):
-    #     print(self)
+        data['tags'] = tags
+
+        # flatten the follower data with the user data
+        return {
+            **data
+        }
+
+class TagSerializer(serializers.ModelSerializer):
+    """ Serializes a Tag model """
+    class Meta:
+        """ Meta """
+        model = Tag
+        fields = ['name','id','selectedDefault']

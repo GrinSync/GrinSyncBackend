@@ -8,7 +8,7 @@ def addEventTags(event, tags):
     for tag in tags:
         if 'sport' in tag:
             tag = 'Sports'
-        tag = tag.replace('amp;','')
+        tag = tag.replace('&amp;','and')
         tag = string.capwords(tag)
         tagObj, created = Tag.objects.get_or_create(name=tag)
         event.tags.add(tagObj)

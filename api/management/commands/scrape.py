@@ -95,6 +95,14 @@ def scrapeCalendar(num_events = "false"):
             event = Event.objects.get(liveWhaleID = externalID)
             if event.host != autoPopulateUser: # We want to avoid changing them if someone has claimed it
                  continue
+
+            eventAsSet = Event.objects.filter(liveWhaleID = externalID).update(
+                                    host = autoPopulateUser, title = title,
+                                    location = location, start = startTime, end = endTime,
+                                    description = description, studentsOnly = False,
+                                    liveWhaleID = externalID)
+            # eventAsSet.save()
+            event = Event.objects.get(liveWhaleID = externalID)
         except ObjectDoesNotExist:
             event = Event.objects.create(host = autoPopulateUser, title = title,
                                     location = location, start = startTime, end = endTime,

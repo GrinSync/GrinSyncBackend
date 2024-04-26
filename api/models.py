@@ -31,6 +31,7 @@ class Organization(models.Model):
     studentLeaders = models.ManyToManyField(User, blank=False, related_name='childOrgs')
 
 class Tag(models.Model):
+    """ A model for event filtering tags """
     name = models.CharField(max_length=32, unique=True)
     selectedDefault = models.BooleanField(default=False)
 

@@ -65,6 +65,7 @@ def createUser(request):
     password = request.POST.get("password", None)
     userType = request.POST.get("type", None)
     email = request.POST.get("email", None)
+    tags = request.POST.getlist("tag")
 
     # Check that all of the required fields were provided
     if not (firstName and lastName and password and userType and email):
@@ -80,8 +81,16 @@ def createUser(request):
     # Actually interact with the database and create the user
     try:
         user = User.objects.create_user(first_name = firstName, last_name = lastName,
-                                        type = userType, email = email, username = email,
+                                        type = userType, email = email.lower(), username = email.lower(),
                                         password = password, is_active = False)
+        if len(tags) != 0: # Since we already set the default, if no tags are provided, just do default
+            user.interestedTags.clear()
+            for tag in tags:
+                try:
+                    user.interestedTags.add(Tag.objects.get(name=tag))
+                except ObjectDoesNotExist:
+                    return JsonResponse({'error':f"Requested tag '{tag}' is not a valid tag"}, safe=False, status = 400)
+            user.save()
 
     # Since the database constraints are checked at creation, make sure they all passed
     except IntegrityError:
@@ -153,7 +162,7 @@ def createEvent(request):
     orgID = request.POST.get("org_id", "") # Optional
     location = request.POST.get("location", None)
     studentsOnly = request.POST.get("studentsOnly", None)
-    tags = request.POST.get("tags", "") # Optional?
+    tags = request.POST.get("tag", "") # Optional?
     start = request.POST.get("start", None)
     end = request.POST.get("end", None)
 
@@ -233,6 +242,35 @@ def createEvent(request):
     # Send the user back the information it'll need
     return JsonResponse({'id' : event.id}, safe=False, status = 200)
 
+@api_view(['POST'])
+@permission_classes([IsAdminUser]) # Make sure user is logged in
+def createTag(request):
+    """ Creates a new tag in the database """
+    name = request.POST.get("name", None)
+    if not name:
+        return JsonResponse({'error' : 'No tag name provided'}, safe=False, status = 400)
+    tag = Tag.objects.create(name = name)
+    return JsonResponse({'id' : tag.id}, safe=False, status = 200)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def updateInterestedTags(request):
+    """ Updates an user's interested tags """
+    tags = request.POST.getlist("tag", None)
+    if not tags:
+        return JsonResponse({'error' : 'No tag names provided'}, safe=False, status = 400)
+
+    user = request.user
+    user.interestedTags.clear()
+    for tag in tags:
+        try:
+            user.interestedTags.add(Tag.objects.get(name=tag))
+        except ObjectDoesNotExist:
+            return JsonResponse({'error':f"Requested tag '{tag}' is not a valid tag"}, safe=False, status = 400)
+    user.save()
+    return JsonResponse('Sucess', safe=False, status = 200)
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated]) # Make sure user is logged in
 def getEvent(request):
@@ -263,7 +301,7 @@ def search(request): # TODO: decide if want one search for everything or differe
 def getAll(request):
     """ Return all the info for all events. """
     ## Do we want the calendar to update the tags by default?
-    # tags = request.GET.getlist("tags")
+    # tags = request.GET.getlist("tag")
     # if len(tags) == 0: # This setup lets us do the default by not sending anything. Can't set no tags tho
     #     if request.user.is_authenticated: # If the user's logged in, use their defaults
     #         tags = request.user.interestedTags.all()
@@ -292,12 +330,20 @@ def getAllCreated(request):
 @api_view(['GET'])
 def getUpcoming(request):
     """ Return all the info for upcoming events. """
-    tags = request.GET.getlist("tags")
+    tags = request.GET.getlist("tag")
     if len(tags) == 0: # This setup lets us do the default by not sending anything. Can't set no tags tho
         if request.user.is_authenticated: # If the user's logged in, use their defaults
             tags = request.user.interestedTags.all()
         else: # Otherwise, we'll use the universal defaults
             tags = Tag.objects.filter(selectedDefault = True)
+    else:
+        tagObjs = []
+        for tag in tags:
+            try:
+                tagObjs.append(Tag.objects.get(name=tag))
+            except ObjectDoesNotExist:
+                return JsonResponse({'error':f"Requested tag '{tag}' is not a valid tag"}, safe=False, status = 400)
+        tags = tagObjs
 
     today = datetime.today().replace(minute=0) # assigns today's date to a variable
     upcoming = Event.objects.filter(start__gte=today) # gets events with a starting date >= to today
@@ -473,7 +519,7 @@ def editEvent(request):
     newTitle = request.POST.get("title", None)
     newDescription = request.POST.get("description", None)
     newStudentsOnly = request.POST.get("studentsOnly", None)
-    newTags = request.POST.get("tags", None)
+    newTags = request.POST.get("tag", None)
     newRepeatEnd = request.POST.get("repeatDate", None)
     if newRepeatEnd:
         try:
@@ -556,6 +602,7 @@ def deleteEvent(request):
 
 
 def tagManagerPage(request):
+    """ A html page for us to manage the tags """
      # if this is a POST request we need to process the form data
     if request.method == "POST":
         # Get the monitor from the request

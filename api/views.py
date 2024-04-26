@@ -65,7 +65,7 @@ def createUser(request):
     password = request.POST.get("password", None)
     userType = request.POST.get("type", None)
     email = request.POST.get("email", None)
-    tags = request.POST.getlist("tag")
+    tags = request.POST.get("tags")
 
     # Check that all of the required fields were provided
     if not (firstName and lastName and password and userType and email):
@@ -83,9 +83,9 @@ def createUser(request):
         user = User.objects.create_user(first_name = firstName, last_name = lastName,
                                         type = userType, email = email.lower(), username = email.lower(),
                                         password = password, is_active = False)
-        if len(tags) != 0: # Since we already set the default, if no tags are provided, just do default
+        if tags: # Since we already set the default, if no tags are provided, just do default
             user.interestedTags.clear()
-            for tag in tags:
+            for tag in tags.split(','):
                 try:
                     user.interestedTags.add(Tag.objects.get(name=tag))
                 except ObjectDoesNotExist:
@@ -243,26 +243,16 @@ def createEvent(request):
     return JsonResponse({'id' : event.id}, safe=False, status = 200)
 
 @api_view(['POST'])
-@permission_classes([IsAdminUser]) # Make sure user is logged in
-def createTag(request):
-    """ Creates a new tag in the database """
-    name = request.POST.get("name", None)
-    if not name:
-        return JsonResponse({'error' : 'No tag name provided'}, safe=False, status = 400)
-    tag = Tag.objects.create(name = name)
-    return JsonResponse({'id' : tag.id}, safe=False, status = 200)
-
-@api_view(['POST'])
 @permission_classes([IsAuthenticated]) # Make sure user is logged in
 def updateInterestedTags(request):
     """ Updates an user's interested tags """
-    tags = request.POST.getlist("tag", None)
+    tags = request.POST.get("tags", None)
     if not tags:
         return JsonResponse({'error' : 'No tag names provided'}, safe=False, status = 400)
 
     user = request.user
     user.interestedTags.clear()
-    for tag in tags:
+    for tag in tags.split(','):
         try:
             user.interestedTags.add(Tag.objects.get(name=tag))
         except ObjectDoesNotExist:
@@ -301,12 +291,23 @@ def search(request): # TODO: decide if want one search for everything or differe
 def getAll(request):
     """ Return all the info for all events. """
     ## Do we want the calendar to update the tags by default?
-    # tags = request.GET.getlist("tag")
-    # if len(tags) == 0: # This setup lets us do the default by not sending anything. Can't set no tags tho
+    # tags = request.GET.get("tag", None)
+    # if not tags: # This setup lets us do the default by not sending anything. Can't set no tags tho
     #     if request.user.is_authenticated: # If the user's logged in, use their defaults
     #         tags = request.user.interestedTags.all()
     #     else: # Otherwise, we'll use the universal defaults
     #         tags = Tag.objects.filter(selectedDefault = True)
+    # else:
+    #     tagObjs = []
+    #     for tag in tags.split(','):
+    #         if tag == 'ALL':
+    #             tagObjs = "ALL"
+    #             break
+    #         try:
+    #             tagObjs.append(Tag.objects.get(name=tag))
+    #         except ObjectDoesNotExist:
+    #             return JsonResponse({'error':f"Requested tag '{tag}' is not a valid tag"}, safe=False, status = 400)
+    #     tags = tagObjs
 
     events = Event.objects.all()
     # events = events.filter(tags__in = tags)
@@ -330,15 +331,15 @@ def getAllCreated(request):
 @api_view(['GET'])
 def getUpcoming(request):
     """ Return all the info for upcoming events. """
-    tags = request.GET.getlist("tag")
-    if len(tags) == 0: # This setup lets us do the default by not sending anything. Can't set no tags tho
+    tags = request.GET.get("tag", None)
+    if not tags: # This setup lets us do the default by not sending anything. Can't set no tags tho
         if request.user.is_authenticated: # If the user's logged in, use their defaults
             tags = request.user.interestedTags.all()
         else: # Otherwise, we'll use the universal defaults
             tags = Tag.objects.filter(selectedDefault = True)
     else:
         tagObjs = []
-        for tag in tags:
+        for tag in tags.split(','):
             if tag == 'ALL':
                 tagObjs = "ALL"
                 break
@@ -523,7 +524,7 @@ def editEvent(request):
     newTitle = request.POST.get("title", None)
     newDescription = request.POST.get("description", None)
     newStudentsOnly = request.POST.get("studentsOnly", None)
-    newTags = request.POST.getlist("tag", None)
+    newTags = request.POST.get("tags", None)
     newRepeatEnd = request.POST.get("repeatDate", None)
     if newRepeatEnd:
         try:
@@ -569,7 +570,11 @@ def editEvent(request):
 
         # Update the tags
         if newTags:
-            event.tags = newTags
+            tags = newTags.split(',')
+            event.tags.clear()
+            for tag in tags:
+                event.tags.set(Tag.objects.get(name = tag))
+
 
         event.save()
         event = nextEvent

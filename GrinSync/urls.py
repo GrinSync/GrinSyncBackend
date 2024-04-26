@@ -41,5 +41,7 @@ urlpatterns = [
     path('api/create/user', apiViews.createUser, name = 'newUser'),
     path('api/verifyUser', apiViews.verifyUser, name = 'newUser'),
     path('api/create/event', apiViews.createEvent, name = 'newEvent'),
+    path('api/create/tag', apiViews.createTag, name = 'newTag'),
+    path('api/updateInterestedTags', apiViews.updateInterestedTags, name = 'updateTags'),
     path('tags/', apiViews.tagManagerPage, name = 'tagManager'),
 ]

@@ -339,6 +339,9 @@ def getUpcoming(request):
     else:
         tagObjs = []
         for tag in tags:
+            if tag == 'ALL':
+                tagObjs = "ALL"
+                break
             try:
                 tagObjs.append(Tag.objects.get(name=tag))
             except ObjectDoesNotExist:
@@ -348,7 +351,8 @@ def getUpcoming(request):
     today = datetime.today().replace(minute=0) # assigns today's date to a variable
     upcoming = Event.objects.filter(start__gte=today) # gets events with a starting date >= to today
     upcoming = upcoming.exclude(start__gt = today + timedelta(weeks = 1)) # limits upcoming events a week out
-    upcoming = upcoming.filter(tags__in = tags)
+    if tags != "ALL":
+        upcoming = upcoming.filter(tags__in = tags)
 
     # hide student-only events if user is not a student
     if (not request.user.is_authenticated) or (request.user.type != "STU"):
@@ -519,7 +523,7 @@ def editEvent(request):
     newTitle = request.POST.get("title", None)
     newDescription = request.POST.get("description", None)
     newStudentsOnly = request.POST.get("studentsOnly", None)
-    newTags = request.POST.get("tag", None)
+    newTags = request.POST.getlist("tag", None)
     newRepeatEnd = request.POST.get("repeatDate", None)
     if newRepeatEnd:
         try:

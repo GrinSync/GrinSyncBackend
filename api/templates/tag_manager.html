@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    <table class="tagTable">
+    <button class="formButton" onClick="window.location.reload();" style="border: none"> Cancel </button>
+    <button class="formButton" type="submit"> Update </button>
+    <tr>
+      <th><h2>Tags</h2></th>
+      <th><h2>Is Default?</h2></th>
+      
+    </tr>
+    {% for tag in tags %}
+    <tr>
+      <td>
+        <h4>{{ tag.name }}</h4>
+      </td>
+      
+      <td class="tagCheckCell">
+        <input class="tagCheck" type="checkbox" name="default_tags" value="{{ tag.pk }}" id="tag_{{ tag.pk }}"
+          {% if tag.selectedDefault %} checked="true" {% endif %}>
+          <label for="tag_{{ tag.pk }}">
+            <img class="tagCheckIcon" src="{% static 'CrabClear.png' %}" />
+          </label>
+          <input type="hidden" name="tag_ids" value="{{ tag.pk }}" />
+          {% comment %} ^ Because we need to know all so we can tell which are selected {% endcomment %}
+          {% comment %} Ok, so techinally we don't, but we're doing this incase we want to implement deletion later {% endcomment %}
+        </input>
+      </td>
+    </tr>
+    {% endfor %}
+    </table>
+    </form>
+{% endblock %}

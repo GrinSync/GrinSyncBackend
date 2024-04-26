@@ -30,3 +30,42 @@ body{
 .content{
     margin: 10px;
 }
+
+
+/* For Tag Manager */
+input:checked ~ label {
+    opacity: 1;
+}
+input:not(:checked) ~ label {
+    opacity: 0.2;
+}
+.tagCheckIcon{
+    width: 50px;
+}
+input[type=checkbox] {
+    display:none;
+}
+table.tagTable{
+    border-collapse: collapse
+}
+table.tagTable th{
+    min-width: 80px;
+}
+table.tagTable tbody tr:nth-child(odd) {
+    background-color: #E2E2E2;
+}
+.tagCheckCell{
+    text-align: center;
+}
+table.tagTable h4{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+.formButton{
+    background: none;
+    margin-right: 10px;
+    width: 100px;
+    border-width: 1px;
+    height: 28px;
+}

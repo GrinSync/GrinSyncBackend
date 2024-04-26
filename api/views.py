@@ -12,13 +12,14 @@ from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 import pytz
 
 
 # import django.middleware.csrf as csrf
 # from rest_framework.views import APIView
 # from rest_framework.response import Response
+from api.aux_functions import addEventTags
 from api.models import Event, Tag, User, Organization
 import api.serializers as serializers
 
@@ -201,8 +202,8 @@ def createEvent(request):
         offset = relativedelta.relativedelta(days=repeatDays, months=repeatMonths)
         firstEvent = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
                                     location = location, start = startDT, end = endDT,
-                                    description = description, studentsOnly =studentsOnly,
-                                    tags = tags)
+                                    description = description, studentsOnly = studentsOnly)
+        addEventTags(firstEvent, tags)
 
         prevEvent = firstEvent
         startDT = startDT + offset
@@ -210,8 +211,8 @@ def createEvent(request):
         while startDT <= repeatEnd:
             event = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
                                     location = location, start = startDT, end = endDT,
-                                    description = description, studentsOnly =studentsOnly,
-                                    tags = tags)
+                                    description = description, studentsOnly = studentsOnly)
+            addEventTags(event, tags)
             prevEvent.nextRepeat = event
             prevEvent.save()
             prevEvent = event
@@ -226,8 +227,8 @@ def createEvent(request):
     # Actually interact with the database and create the event
     event = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
                                     location = location, start = startDT, end = endDT,
-                                    description = description, studentsOnly =studentsOnly,
-                                    tags = tags)
+                                    description = description, studentsOnly = studentsOnly)
+    addEventTags(event, tags)
 
     # Send the user back the information it'll need
     return JsonResponse({'id' : event.id}, safe=False, status = 200)
@@ -325,11 +326,24 @@ def getEventsInDay(request):
 
 @api_view(['GET'])
 def getTags(request):
-    """ Return all the info for all events. """
+    """ Return all the current tags. """
     tags = Tag.objects.all()
     tagsJson = serializers.TagSerializer(tags, many = True) #turns info into a string
     return JsonResponse(tagsJson.data, safe=False)  #returns the info that the user needs in JSON form
 
+@api_view(['POST'])
+@permission_classes([IsAdminUser]) # Make sure user is an admin
+def createTag(request):
+    """ Return all the info for all events. """
+    name = request.POST.get("name", None) # get the requested day
+    if not name:
+        return JsonResponse({'error':"No 'name' field provided"}, safe=False, status = 400)
+
+    try:
+        tag = Tag.objects.create(name = name)
+    except IntegrityError:
+        return JsonResponse({'error':"A tag with that name already exists"}, safe=False, status = 400)
+    return JsonResponse({'id':tag.id}, safe=False, status = 200)  #returns the info that the user needs in JSON form
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated]) # Make sure user is logged in
@@ -539,6 +553,24 @@ def deleteEvent(request):
         return HttpResponse("This event can't be deleted because user is not the event's host.", status = 404)
 
     return JsonResponse("Success", safe=False, status = 200)
+
+
+def tagManagerPage(request):
+     # if this is a POST request we need to process the form data
+    if request.method == "POST":
+        # Get the monitor from the request
+        defTags = request.POST.getlist('default_tags')
+        allTags = list(set(request.POST.getlist('tag_ids')))
+
+        for tagPK in allTags:
+            tag = Tag.objects.get(pk=tagPK)
+            tag.selectedDefault = (tagPK in defTags) #pylint: disable=C0325
+            tag.save()
+
+
+    tags = Tag.objects.all()
+
+    return render(request, "tag_manager.html", {"tags" : tags})
 
 
 ## In case we need later, here was an attempt at a custom login & token return implementation

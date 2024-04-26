@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 from requests import get
 
+from api.aux_functions import addEventTags
 from api.models import Event, Tag, User
 
 CST = pytz.timezone('America/Chicago')
@@ -101,15 +102,7 @@ def scrapeCalendar(num_events = "false"):
                                         # if it was on the college's public calendar, we don't need to hide it
                                         # but also I know not all are, so maybe find a clever way to do this
                                     liveWhaleID = externalID)
-        event.tags.clear()
-        for tag in tags:
-            if 'sport' in tag:
-                tag = 'Sports'
-            tag = tag.replace('amp;','')
-            tag = string.capwords(tag)
-            tagObj, created = Tag.objects.get_or_create(name=tag)
-            event.tags.add(tagObj)
-        event.save()
+        addEventTags(event, tags)
 
 
 

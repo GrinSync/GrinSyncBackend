@@ -85,14 +85,15 @@ def createUser(request):
         user = User.objects.create_user(first_name = firstName, last_name = lastName,
                                         type = userType, email = email.lower(), username = email.lower(),
                                         password = password, is_active = False)
-        if tags: # Since we already set the default, if no tags are provided, just do default
-            user.interestedTags.clear()
+        if tags:
             for tag in tags.split(','):
                 try:
                     user.interestedTags.add(Tag.objects.get(name=tag))
                 except ObjectDoesNotExist:
                     return JsonResponse({'error':f"Requested tag '{tag}' is not a valid tag"}, safe=False, status = 400)
-            user.save()
+        else:
+            user.interestedTags.set(Tag.objects.filter(selectedDefault = True))
+        user.save()
 
     # Since the database constraints are checked at creation, make sure they all passed
     except IntegrityError:
@@ -521,7 +522,6 @@ def editEvent(request):
 
     startOffset = startDT - event.start
     endOffset = endDT - event.end
-    print(startOffset, " ", endOffset)
     newLocation = request.POST.get("location", None)
     newTitle = request.POST.get("title", None)
     newDescription = request.POST.get("description", None)
@@ -575,7 +575,7 @@ def editEvent(request):
             tags = newTags.split(',')
             event.tags.clear()
             for tag in tags:
-                event.tags.set(Tag.objects.get(name = tag))
+                event.tags.add(Tag.objects.get(name = tag))
 
 
         event.save()

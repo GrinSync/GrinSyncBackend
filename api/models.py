@@ -11,11 +11,6 @@ TYPES = [
     (None, "-------"),
 ]
 
-def defaultTags():
-    """ Returns a list of the default tags we think users should have """
-    print(Tag.objects.all())
-    return Tag.objects.filter(selectedDefault = True)
-
 
 # Our basic user class. The AbstractUser class already implements names, email, & username/password
 class User(AbstractUser):
@@ -24,7 +19,7 @@ class User(AbstractUser):
     TYPES = TYPES  # Need this so User.TYPES works later
     type = models.CharField(choices=TYPES, max_length=3, blank=False, default="COM")
     likedEvents = models.ManyToManyField('Event', blank=True, related_name="likedUsers")
-    interestedTags = models.ManyToManyField('Tag', blank=True, default=defaultTags)
+    interestedTags = models.ManyToManyField('Tag', blank=True)
 
 class Organization(models.Model):
     """ A model for a student org """

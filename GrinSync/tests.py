@@ -16,9 +16,9 @@ class APITestCase(TestCase):
     def setUp(self):
         self.time = timezone.now()
         self.tag = Tag.objects.create(name = "Interesting Events", selectedDefault = True)
-        print(Tag.objects.all()) # returns <QuerySet [<Tag: Tag object (1)>]>
         self.user1 = User.objects.create_user(username="admin", password="admintest", type = 'STU')
-        print(self.user1.interestedTags.all()) # returns <QuerySet []>
+        self.user1.interestedTags.add(self.tag)
+        self.user1.save()
         self.event1 = Event.objects.create(host=self.user1,
                             title="Testing Event",
                             start=self.time,
@@ -93,8 +93,7 @@ class APITestCase(TestCase):
         response = views.getUpcoming(request) #TODO: Update testing to include tags
         assert response.status_code == 200
         assert len(json.loads(response.content)) == 0 # None of the events have tags
-
-        postRequest = factory.post('/api/upcoming/', {'id': self.event2.id, 'tag': "Interesting Events"})
+        postRequest = factory.post('/api/editEvent/', {'id': self.event2.id, 'tags': "Interesting Events"})
         force_authenticate(postRequest, user=self.user2, token=self.token2)
         response = views.editEvent(postRequest)
         assert response.status_code == 200
@@ -103,7 +102,7 @@ class APITestCase(TestCase):
         assert response.status_code == 200
         assert len(json.loads(response.content)) == 1 # There's now 1 event with default tags
 
-        postRequest = factory.post('/api/upcoming/', {'id': self.event1.id, 'tag': "Interesting Events"})
+        postRequest = factory.post('/api/editEvent/', {'id': self.event1.id, 'tags': "Interesting Events"})
         force_authenticate(postRequest, user=self.user1, token=self.token1)
         response = views.editEvent(postRequest)
         assert response.status_code == 200
@@ -111,8 +110,7 @@ class APITestCase(TestCase):
         force_authenticate(request, user=self.user1, token=self.token1)
         response = views.getUpcoming(request)
         assert response.status_code == 200
-        # assert len(json.loads(response.content)) == 2 # There's now 2 event with default tags when you're logged in
-        ## TODO: FIX ^
+        assert len(json.loads(response.content)) == 2 # There's now 2 event with default tags when you're logged in
 
     def testStudentsOnly(self):
         """ Tests that student only events are only visible to students """
@@ -120,12 +118,12 @@ class APITestCase(TestCase):
         self.event1.save()
         self.event2.tags.add(self.tag)
         self.event2.save()
-        request = factory.get('/api/upcoming/', {'tag':'ALL'})
+        request = factory.get('/api/upcoming/', {'tags':'ALL'})
         response = views.getUpcoming(request)
         assert response.status_code == 200
         assert len(json.loads(response.content)) == 1 # There's only 1 non-student event
 
-        request = factory.get('/api/upcoming/', {'tag':'ALL'})
+        request = factory.get('/api/upcoming/', {'tags':'ALL'})
         force_authenticate(request, user=self.user1, token=self.token1)
         response = views.getUpcoming(request)
         assert response.status_code == 200

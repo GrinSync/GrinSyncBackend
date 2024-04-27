@@ -6,8 +6,18 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         """ Meta """
         model = User
-        fields = ['first_name', 'last_name', 'email', 'type', 'id']
+        fields = ['first_name', 'last_name', 'email', 'type', 'id', 'interestedTags']
+        
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        tags = []
+        for tagPk in data['interestedTags']:
+            tags.append(Tag.objects.get(pk=tagPk).name)
 
+        data['interestedTags'] = tags
+
+        # flatten the follower data with the user data
+        return {**data}
 
 
 class EventSerializer(serializers.ModelSerializer):
@@ -51,9 +61,7 @@ class EventSerializer(serializers.ModelSerializer):
         data['tags'] = tags
 
         # flatten the follower data with the user data
-        return {
-            **data
-        }
+        return {**data}
 
 class TagSerializer(serializers.ModelSerializer):
     """ Serializes a Tag model """

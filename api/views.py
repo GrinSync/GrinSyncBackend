@@ -609,6 +609,15 @@ def deleteEvent(request):
 
     return JsonResponse("Success", safe=False, status = 200)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getUserTags(request):
+    """ Return a user's preferred tags. """
+    user = request.user
+
+    # Seralize the user object and return that info
+    tagsJson = serializers.TagSerializer(user.interestedTags.all(), many = True)
+    return JsonResponse(tagsJson.data, safe=False)
 
 def tagManagerPage(request):
     """ A html page for us to manage the tags """

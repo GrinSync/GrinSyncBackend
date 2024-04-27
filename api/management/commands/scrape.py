@@ -1,5 +1,6 @@
 import datetime
 import json
+import re
 import string
 import pytz
 from django.core.exceptions import ObjectDoesNotExist
@@ -81,8 +82,13 @@ def scrapeCalendar(num_events = "false"):
         if ('tabling' in title.lower()) or ('tabling' in description.lower()):
                         # Idk, is it possible some don't have a title? Prob not
             tags.append('Tabling')
-        
-        # tags = str(tags).replace('[','').replace(']','').replace("'",'')
+
+        if 'contact_info' in event:
+            contactEmail = re.search(r'[\w.+-]+@[\w-]+\.[\w.-]+', event['contact_info']).group(0).lower()
+        elif 'registration_owner_email' in event:
+            contactEmail = event['registration_owner_email']
+        else:
+            contactEmail = None
 
         if not location:
             continue
@@ -100,7 +106,7 @@ def scrapeCalendar(num_events = "false"):
                                     host = autoPopulateUser, title = title,
                                     location = location, start = startTime, end = endTime,
                                     description = description, studentsOnly = False,
-                                    liveWhaleID = externalID)
+                                    liveWhaleID = externalID, contactEmail = contactEmail)
             # eventAsSet.save()
             event = Event.objects.get(liveWhaleID = externalID)
         except ObjectDoesNotExist:
@@ -109,7 +115,7 @@ def scrapeCalendar(num_events = "false"):
                                     description = description, studentsOnly = False, # I'm going to assume thats
                                         # if it was on the college's public calendar, we don't need to hide it
                                         # but also I know not all are, so maybe find a clever way to do this
-                                    liveWhaleID = externalID)
+                                    liveWhaleID = externalID, contactEmail = contactEmail)
         addEventTags(event, tags)
 
 

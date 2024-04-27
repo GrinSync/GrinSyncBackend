@@ -13,6 +13,7 @@ TYPES = [
 
 def defaultTags():
     """ Returns a list of the default tags we think users should have """
+    print(Tag.objects.all())
     return Tag.objects.filter(selectedDefault = True)
 
 
@@ -51,7 +52,6 @@ class Event(models.Model):
     # Other stuff we might want to record about events
     studentsOnly = models.BooleanField(blank = False) # We'll store this as its own field for later
     tags = models.ManyToManyField(Tag, blank=True)
-    # tags = models.JSONField(blank = True, null = True) # TODO: we can make this many-to-many
 
     # For repeating events
     nextRepeat = models.OneToOneField('Event', blank = True, null=True, related_name="previousRepeat",
@@ -59,6 +59,7 @@ class Event(models.Model):
 
     # External Infomation
     liveWhaleID = models.PositiveIntegerField(blank=True, null=True, unique=True)
+    contactEmail = models.EmailField(blank=True, null=True)
     # TODO: Contact or contact's email
     # Also maybe geolocation info?
 

@@ -25,6 +25,8 @@ import api.serializers as serializers
 
 CST = pytz.timezone('America/Chicago')
 
+autoPopulateUser = User.objects.get(username="moderator")
+
 # TODO: What happens if a non student creates a student only event? We prob let this happen, but can they edit it?
 
 @ensure_csrf_cookie
@@ -94,7 +96,7 @@ def createUser(request):
 
     # Since the database constraints are checked at creation, make sure they all passed
     except IntegrityError:
-        # TODO: Check if same user exists but is just inactive. Don't leak info
+        # TODO: Check if same user exists but is just inactive. Don't leak info. Delete the inactive one
         return JsonResponse({'error' : 'Integrity Error: It\'s possible that username is already in use'},
                                 safe=False, status = 400)
 
@@ -258,7 +260,7 @@ def updateInterestedTags(request):
         except ObjectDoesNotExist:
             return JsonResponse({'error':f"Requested tag '{tag}' is not a valid tag"}, safe=False, status = 400)
     user.save()
-    return JsonResponse('Sucess', safe=False, status = 200)
+    return JsonResponse('Success', safe=False, status = 200)
 
 
 @api_view(['GET'])
@@ -619,6 +621,81 @@ def getUserTags(request):
     tagsJson = serializers.TagSerializer(user.interestedTags.all(), many = True)
     return JsonResponse(tagsJson.data, safe=False)
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def claimEvent(request): #TODO: Frontend should have some sort of check or confirmation
+    """ Requests ownership of an event populated by the calendar. Takes: id (of event) """
+    eid = request.POST.get("id", None)
+    if not eid:
+        return JsonResponse({'error':"No 'id' field provided"}, safe = False, status = 400)
+
+    try:
+        event = Event.objects.get(pk = eid)
+    except ObjectDoesNotExist:
+        return JsonResponse({'error':'No event with the given event exists'}, safe = False, status = 400)
+
+    if not event.contactEmail:
+        return JsonResponse({'error':'This event is not claimable since there is no contact info'},
+                             safe = False, status = 400)
+
+    if event.host != autoPopulateUser:
+        return JsonResponse({'error':'This event is not claimable as someone already owns it'},
+                             safe = False, status = 400)
+
+    user = request.user
+
+    if event.contactEmail.casefold() == user.email.casefold():
+        event.host = user
+        event.save()
+        return JsonResponse("Success", safe = False, status = 200)
+
+    confirmationToken = default_token_generator.make_token(user)
+
+    send_mail(
+        "GrinSync Event Claim",
+        (f"Hi, this email was sent because { user.first_name } { user.last_name } would like to claim "
+         f"overship for { event.title }; an auto-populated event for which you are the contact. If you "
+         "would like ownership to be transfered, please click the following link: \n"
+            f"{request.build_absolute_uri('/api/reassignEvent')}?"
+                f"token={confirmationToken}&event={event.pk}&newHost={user.pk}"),
+        "confirmation@grinsync.com",
+        [event.contactEmail],
+        fail_silently=False,
+    )
+    return JsonResponse("Confirmation Email Sent", safe = False, status = 200)
+
+
+@api_view(['GET'])
+def reassignEvent(request):
+    """ Reassigns ownership to the requested user. Takes: id (of event) """
+    token = request.GET.get("token", "")
+    eid = request.GET.get("event", "")
+    uid = request.GET.get("newHost", "")
+
+    try:
+        user = User.objects.get(pk=uid)
+    except ObjectDoesNotExist:
+        return render(request, "registration/email_verification_error.html", {"errorMessage":
+                'User not found', 
+            }, status=400)
+    try:
+        event = Event.objects.get(pk=eid)
+    except ObjectDoesNotExist:
+        return render(request, "registration/email_verification_error.html", {"errorMessage":
+                'User not found', 
+            }, status=400)
+
+    if not default_token_generator.check_token(user, token):
+        return render(request, "registration/email_verification_error.html", {"errorMessage":
+                'Token is invalid or expired. Please request another confirmation email by signing in.', 
+            }, status=400)
+
+    event.host = user
+    # TODO: Some sort of association of prev event.contact with user/org
+    event.save()
+    return render(request, "registration/event_verification_confirmation.html")
+
 def tagManagerPage(request):
     """ A html page for us to manage the tags """
      # if this is a POST request we need to process the form data
@@ -635,7 +712,7 @@ def tagManagerPage(request):
 
     tags = Tag.objects.all()
 
-    return render(request, "tag_manager.html", {"tags" : tags})
+    return render(request, "tag_manager.html", {"tag" : tags})
 
 
 ## In case we need later, here was an attempt at a custom login & token return implementation

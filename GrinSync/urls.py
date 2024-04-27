@@ -44,5 +44,7 @@ urlpatterns = [
     path('api/create/event', apiViews.createEvent, name = 'newEvent'),
     path('api/create/tag', apiViews.createTag, name = 'newTag'),
     path('api/updateInterestedTags', apiViews.updateInterestedTags, name = 'updateTags'),
+    path('api/claimEvent', apiViews.claimEvent, name = 'newTag'),
+    path('api/reassignEvent', apiViews.reassignEvent, name = 'newTag'),
     path('tags/', apiViews.tagManagerPage, name = 'tagManager'),
 ]

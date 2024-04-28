@@ -1,31 +1,35 @@
 # pylint: disable=unused-argument
 from datetime import datetime, timedelta
 from smtplib import SMTPException
+
+import pytz
 from dateutil import relativedelta
-from django.db import IntegrityError
-from django.http import HttpResponse, JsonResponse
+from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 # from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
-from django.contrib.auth.tokens import default_token_generator
+from django.db import IntegrityError, OperationalError
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-import pytz
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
-
+import api.serializers as serializers
 # import django.middleware.csrf as csrf
 # from rest_framework.views import APIView
 # from rest_framework.response import Response
 from api.aux_functions import addEventTags
-from api.models import Event, Tag, User, Organization
-import api.serializers as serializers
+from api.models import Event, Organization, Tag, User
 
 CST = pytz.timezone('America/Chicago')
 
-autoPopulateUser = User.objects.get(username="moderator")
+try:
+    autoPopulateUser = User.objects.get(username="moderator")
+except OperationalError:
+    get_user_model().objects.get(username="moderator")
 
 # TODO: What happens if a non student creates a student only event? We prob let this happen, but can they edit it?
 

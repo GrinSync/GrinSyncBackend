@@ -26,10 +26,9 @@ from api.models import Event, Organization, Tag, User
 
 CST = pytz.timezone('America/Chicago')
 
-try:
-    autoPopulateUser = User.objects.get(username="moderator")
-except OperationalError:
-    pass
+def getAutoPopulatedEventUser():
+    """ Just a universal way to make sure we can check who the default host for scraped events is """
+    return User.objects.get(username="moderator")
 
 # TODO: What happens if a non student creates a student only event? We prob let this happen, but can they edit it?
 
@@ -643,7 +642,7 @@ def claimEvent(request): #TODO: Frontend should have some sort of check or confi
         return JsonResponse({'error':'This event is not claimable since there is no contact info'},
                              safe = False, status = 400)
 
-    if event.host != autoPopulateUser:
+    if event.host != getAutoPopulatedEventUser():
         return JsonResponse({'error':'This event is not claimable as someone already owns it'},
                              safe = False, status = 400)
 

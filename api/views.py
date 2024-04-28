@@ -29,7 +29,7 @@ CST = pytz.timezone('America/Chicago')
 try:
     autoPopulateUser = User.objects.get(username="moderator")
 except OperationalError:
-    get_user_model().objects.get(username="moderator")
+    pass
 
 # TODO: What happens if a non student creates a student only event? We prob let this happen, but can they edit it?
 

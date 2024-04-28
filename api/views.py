@@ -4,12 +4,11 @@ from smtplib import SMTPException
 
 import pytz
 from dateutil import relativedelta
-from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 # from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
-from django.db import IntegrityError, OperationalError
+from django.db import IntegrityError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -168,7 +167,7 @@ def createEvent(request):
     orgID = request.POST.get("org_id", "") # Optional
     location = request.POST.get("location", None)
     studentsOnly = request.POST.get("studentsOnly", None)
-    tags = request.POST.get("tag", "") # Optional?
+    tags = request.POST.get("tags", "") # Optional?
     start = request.POST.get("start", None)
     end = request.POST.get("end", None)
 
@@ -279,12 +278,25 @@ def getEvent(request):
 @api_view(['GET'])
 def search(request): # TODO: decide if want one search for everything or different for events vs users
     """ Return all the matching events for a given search. Takes: query """
+    tags = request.GET.get("tags", None) 
     query = request.GET.get("query", None)
     if not query:
         return JsonResponse({'error' : "Required Argument 'query' was not provided"}, safe=False, status = 400)
 
     matching = (Event.objects.filter(title__contains = query) |
                     Event.objects.filter(location__contains = query)) # TODO: Sort by closeness to date not exceeding?
+
+    if tags: # If tags aren't provided, we'll assume we want all events that match
+        tagObjs = []
+        for tag in tags.split(','):
+            # if tag == 'ALL': # If we want to support the "ALL" tag, but I think just not sending any will work
+            #     tagObjs = Tag.objects.all()
+            #     break
+            try:
+                tagObjs.append(Tag.objects.get(name=tag))
+            except ObjectDoesNotExist:
+                return JsonResponse({'error':f"Requested tag '{tag}' is not a valid tag"}, safe=False, status = 400)
+        matching = matching.filter(tags__in = tagObjs)
 
     # hide student-only events if user is not a student
     if (not request.user.is_authenticated) or (request.user.type != "STU"):
@@ -337,7 +349,7 @@ def getAllCreated(request):
 @api_view(['GET'])
 def getUpcoming(request):
     """ Return all the info for upcoming events. """
-    tags = request.GET.get("tag", None)
+    tags = request.GET.get("tags", None)
     if not tags: # This setup lets us do the default by not sending anything. Can't set no tags tho
         if request.user.is_authenticated: # If the user's logged in, use their defaults
             tags = request.user.interestedTags.all()
@@ -715,7 +727,7 @@ def tagManagerPage(request):
 
     tags = Tag.objects.all()
 
-    return render(request, "tag_manager.html", {"tag" : tags})
+    return render(request, "tag_manager.html", {"tags" : tags})
 
 
 ## In case we need later, here was an attempt at a custom login & token return implementation

@@ -33,6 +33,11 @@ jobs:
       run: |
         python manage.py makemigrations
         python manage.py migrate
+    - name: Prep
+      run: |
+          export DJANGO_SUPERUSER_USERNAME=moderator
+          export DJANGO_SUPERUSER_PASSWORD=temptestpassword
+          python manage.py createsuperuser --noinput
     - name: Run Tests
       run: |
         python manage.py check

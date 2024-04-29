@@ -88,7 +88,7 @@ def createUser(request):
                                         type = userType, email = email.lower(), username = email.lower(),
                                         password = password, is_active = False)
         if tags:
-            for tag in tags.split(','):
+            for tag in tags.split(';'):
                 try:
                     user.interestedTags.add(Tag.objects.get(name=tag))
                 except ObjectDoesNotExist:
@@ -188,7 +188,7 @@ def createOrg(request):
         org = Organization.objects.create(name = name, email = email)
         org.studentLeaders.add(request.user)
         if additionalLeaders:
-            for lead in additionalLeaders.split(','):
+            for lead in additionalLeaders.split(';'):
                 try:
                     org.studentLeaders.add(User.objects.get(username=lead))
                 except ObjectDoesNotExist: # STRETCH IDEA: Email users an invite to join their student org and GrinSync
@@ -454,7 +454,7 @@ def search(request): # TODO: decide if want one search for everything or differe
 
     if tags: # If tags aren't provided, we'll assume we want all events that match
         tagObjs = []
-        for tag in tags.split(','):
+        for tag in tags.split(';'):
             # if tag == 'ALL': # If we want to support the "ALL" tag, but I think just not sending any will work
             #     tagObjs = Tag.objects.all()
             #     break
@@ -483,7 +483,7 @@ def getAll(request):
     #         tags = Tag.objects.filter(selectedDefault = True)
     # else:
     #     tagObjs = []
-    #     for tag in tags.split(','):
+    #     for tag in tags.split(';'):
     #         if tag == 'ALL':
     #             tagObjs = "ALL"
     #             break
@@ -516,14 +516,14 @@ def getAllCreated(request):
 def getUpcoming(request):
     """ Return all the info for upcoming events. """
     tags = request.GET.get("tags", None)
-    if not tags: # This setup lets us do the default by not sending anything. Can't set no tags tho
+    if (not tags) or (tags == ""): # This setup lets us do the default by not sending anything. Can't set no tags tho
         if request.user.is_authenticated: # If the user's logged in, use their defaults
-            tags = request.user.interestedTags.all()
+            tags = Tag.objects.all()
         else: # Otherwise, we'll use the universal defaults
             tags = Tag.objects.filter(selectedDefault = True)
     else:
         tagObjs = []
-        for tag in tags.split(','):
+        for tag in tags.split(';'):
             if tag == 'ALL':
                 tagObjs = "ALL"
                 break
@@ -754,7 +754,7 @@ def editEvent(request):
 
         # Update the tags
         if newTags:
-            tags = newTags.split(',')
+            tags = newTags.split(';')
             event.tags.clear()
             for tag in tags:
                 event.tags.add(Tag.objects.get(name = tag))

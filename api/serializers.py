@@ -6,8 +6,8 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         """ Meta """
         model = User
-        fields = ['first_name', 'last_name', 'email', 'type', 'id', 'interestedTags']
-        
+        fields = ['first_name', 'last_name', 'email', 'type', 'id', 'interestedTags', 'childOrgs']
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         tags = []

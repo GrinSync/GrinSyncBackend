@@ -23,9 +23,23 @@ class User(AbstractUser):
 
 class Organization(models.Model):
     """ A model for a student org """
-    name = models.CharField(max_length = 64)
+    name = models.CharField(max_length = 64, unique=True)
+    email = models.EmailField(blank=False, null=False, unique=True)
     studentLeaders = models.ManyToManyField(User, blank=False, related_name='childOrgs')
+<<<<<<< HEAD
     description = models.TextField(blank = True)
+=======
+    is_active = models.BooleanField(default=False) # Naming to keep consistent with django is_active for users
+
+    # These are here solely so that we can make tokens for orgs
+    last_login = models.DateTimeField(blank=True, null=True)
+    password = models.CharField(default="HMMMMMMDOESTHISWORK?", max_length=64) # I don't care if this makes the token less
+    # ^ DON'T USE THIS FOR ANYTHING                             secure, we're just using it for email confirmation anyways
+
+    def get_email_field_name(self):
+        """ Yeah, just here so the token thing doesn't flip """
+        return 'email'
+>>>>>>> ea44eac3baa1a7425a9c018dcd3f0e11778e10f7
 
 class Tag(models.Model):
     """ A model for event filtering tags """
@@ -56,7 +70,6 @@ class Event(models.Model):
     # External Infomation
     liveWhaleID = models.PositiveIntegerField(blank=True, null=True, unique=True)
     contactEmail = models.EmailField(blank=True, null=True)
-    # TODO: Contact or contact's email
     # Also maybe geolocation info?
 
     def save(self, *args, **kwargs): # pylint: disable=unused-argument

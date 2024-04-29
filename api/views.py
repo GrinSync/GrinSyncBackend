@@ -99,9 +99,14 @@ def createUser(request):
 
     # Since the database constraints are checked at creation, make sure they all passed
     except IntegrityError:
-        # TODO: Check if same user exists but is just inactive. Don't leak info. Delete the inactive one
-        return JsonResponse({'error' : 'Integrity Error: It\'s possible that username is already in use'},
+        curCopy = User.objects.get(username = email.lower())
+        if curCopy.is_active:
+            return JsonResponse({'error' : 'Integrity Error: It\'s possible that username is already in use'},
                                 safe=False, status = 400)
+        curCopy.delete()
+        user = User.objects.create_user(first_name = firstName, last_name = lastName,
+                                        type = userType, email = email.lower(), username = email.lower(),
+                                        password = password, is_active = False)
 
     try:
         sendEmailVerification(request, user)
@@ -157,6 +162,152 @@ def getUser(request):
 @permission_classes([IsAuthenticated]) # Make sure the user is logged in
                         # When everyone needs to be logged in, his is prefered over an if statement in
                         # the function for versitility and security
+def createOrg(request):
+    """ Creates a new student Organization in the database """
+
+    # Get the info from the request, and provide default values if the keys are not found
+    # The POST.get here is because we've sent a post request so we need to look for the info in that format
+    name = request.POST.get("name", None)
+    email = request.POST.get("email", None)
+    additionalLeaders = request.POST.get("coleads", None) # Optional
+
+    # Check that all of the required fields were provided
+    if not (name and email):
+        return JsonResponse({'error' : 'Integrity Error: Not all required fields were provided'},
+                                safe=False, status = 400)
+
+    # Make sure that student and faculty accounts have grinnell.edu emails for validation
+    if email.split('@')[1].lower() != "studentorg.grinnell.edu":
+        return JsonResponse({'error' :
+                             'Account Validation Error: Student Org registered without studentorg.grinnell.edu email'},
+                                safe=False, status = 422)
+
+    warnings = ''
+    # Actually interact with the database and create the user
+    try:
+        org = Organization.objects.create(name = name, email = email)
+        org.studentLeaders.add(request.user)
+        if additionalLeaders:
+            for lead in additionalLeaders.split(','):
+                try:
+                    org.studentLeaders.add(User.objects.get(username=lead))
+                except ObjectDoesNotExist: # STRETCH IDEA: Email users an invite to join their student org and GrinSync
+                    warnings = warnings + str(lead)
+        org.save()
+
+    # Since the database constraints are checked at creation, make sure they all passed
+    except IntegrityError:
+        return JsonResponse({'error' : 'Integrity Error: It\'s possible that org name or email is already in use'},
+                                safe=False, status = 400)
+
+
+    # Email verification
+    confirmationToken = default_token_generator.make_token(org)
+
+
+    send_mail(
+        "GrinSync Organization Verification",
+        (f"Hi, this email was sent because { request.user.first_name } { request.user.last_name } is creating "
+         f"a GrinSync Organization named { org.name }. This is the email they listed, "
+         "so if you would like to confirm this email, click here: \n"
+            f"{request.build_absolute_uri('/api/confirmOrg')}?"
+                f"token={confirmationToken}&org={org.pk}"),
+        "confirmation@grinsync.com",
+        [org.email],
+        fail_silently=False,
+    )
+
+    if warnings != '':
+        return JsonResponse({'id' : org.id, 'warnings':f"User(s) {warnings} were not found"}, safe=False, status = 200)
+    return JsonResponse({'id' : org.id}, safe=False, status = 200)
+
+@api_view(['GET'])
+def confirmOrg(request):
+    """ Activates the requested org. Takes: org (the id of the org) and token """
+    token = request.GET.get("token", "")
+    oid = request.GET.get("org", "")
+
+    try:
+        org = Organization.objects.get(pk=oid)
+    except ObjectDoesNotExist:
+        return render(request, "registration/email_verification_error.html", {"errorMessage":
+                'The requested Student Org was not found', 
+            }, status=400)
+
+    if not default_token_generator.check_token(org, token):
+        return render(request, "registration/email_verification_error.html", {"errorMessage":
+                'Token is invalid or expired. Please request another confirmation email.', 
+            }, status=400)
+
+    org.is_active = True
+    org.save()
+    return render(request, "registration/org_verification_confirmation.html", context={'orgName':org.name})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def claimOrg(request): # Potential todo: let existing leaders add other leaders
+    """ Adds a user as a coleader of an existing student org. Takes: id (of org) """
+    oid = request.POST.get("id", None)
+    if not oid:
+        return JsonResponse({'error':"No 'id' field provided"}, safe = False, status = 400)
+
+    try:
+        org = Organization.objects.get(pk = oid)
+    except ObjectDoesNotExist:
+        return JsonResponse({'error':'No org with the given id exists'}, safe = False, status = 400)
+
+    user = request.user
+
+    if user in org.studentLeaders.all():
+        return JsonResponse("You're already a student leader...", safe = False, status = 200)
+
+    confirmationToken = default_token_generator.make_token(user)
+
+    send_mail(
+        "GrinSync Organization Co-Leader Request",
+        (f"Hi, this email was sent because { user.first_name } { user.last_name } is requesting to join "
+         f"{ org.name } as a co-leader with editing ability. This is the listed contact email for { org.name }, "
+         "so if you would like to add them as a co-leader, click here: \n"
+            f"{request.build_absolute_uri('/api/confirmOrgClaim')}?"
+                f"token={confirmationToken}&org={org.pk}&newCo={user.pk}"),
+        "confirmation@grinsync.com",
+        [org.email],
+        fail_silently=False,
+    )
+    return JsonResponse("Confirmation Email Sent", safe = False, status = 200)
+
+@api_view(['GET'])
+def confirmOrgClaim(request):
+    """ Adds the requested user as a co-leader of an org. Takes: org (the id of the org), newCo, and token """
+    token = request.GET.get("token", "")
+    oid = request.GET.get("org", "")
+    uid = request.GET.get("newCo", "")
+
+    try:
+        user = User.objects.get(pk=uid)
+    except ObjectDoesNotExist:
+        return render(request, "registration/email_verification_error.html", {"errorMessage":
+                'User not found', 
+            }, status=400)
+    try:
+        org = Organization.objects.get(pk=oid)
+    except ObjectDoesNotExist:
+        return render(request, "registration/email_verification_error.html", {"errorMessage":
+                'The requested Student Org was not found', 
+            }, status=400)
+
+    if not default_token_generator.check_token(user, token):
+        return render(request, "registration/email_verification_error.html", {"errorMessage":
+                'Token is invalid or expired. Please request another confirmation email.', 
+            }, status=400)
+
+    org.studentLeaders.add(user)
+    org.save()
+    return render(request, "registration/org_co_add_verification_confirmation.html", context={'orgName':org.name})
+
+
+@api_view(['POST']) # Make sure the request is the correct format
+@permission_classes([IsAuthenticated])
 def createEvent(request):
     """ Creates a new event in the database """
 
@@ -252,12 +403,16 @@ def createEvent(request):
 def updateInterestedTags(request):
     """ Updates an user's interested tags """
     tags = request.POST.get("tags", None)
-    if not tags:
-        return JsonResponse({'error' : 'No tag names provided'}, safe=False, status = 400)
 
     user = request.user
     user.interestedTags.clear()
-    for tag in tags.split(','):
+
+    if not tags:
+        user.interestedTags.set(Tag.objects.filter(selectedDefault = True))
+        user.save()
+        return JsonResponse('Tags set to default selections', safe=False)
+
+    for tag in tags.split(';'):
         try:
             user.interestedTags.add(Tag.objects.get(name=tag))
         except ObjectDoesNotExist:
@@ -278,7 +433,7 @@ def getEvent(request):
 @api_view(['GET'])
 def search(request): # TODO: decide if want one search for everything or different for events vs users
     """ Return all the matching events for a given search. Takes: query """
-    tags = request.GET.get("tags", None) 
+    tags = request.GET.get("tags", None)
     query = request.GET.get("query", None)
     if not query:
         return JsonResponse({'error' : "Required Argument 'query' was not provided"}, safe=False, status = 400)
@@ -491,8 +646,9 @@ def editEvent(request):
     except ValueError:
         return JsonResponse({'error':"No id provided"}, status = 404)
 
-    # Check that the user is a host
-    if request.user != event.host: #TODO: Add a check that the user part of the student org
+    # Check that the user is a host or a leader of the host org
+    if (request.user != event.host) and (
+            (not event.parentOrg) or (request.user not in event.parentOrg.studentLeaders.all())):
         return JsonResponse({'error':"This user is not the event's host"}, status = 403)
 
     #TODO: Add extending event, which means need to store repeat info
@@ -648,7 +804,7 @@ def claimEvent(request): #TODO: Frontend should have some sort of check or confi
     try:
         event = Event.objects.get(pk = eid)
     except ObjectDoesNotExist:
-        return JsonResponse({'error':'No event with the given event exists'}, safe = False, status = 400)
+        return JsonResponse({'error':'No event with the given id exists'}, safe = False, status = 400)
 
     if not event.contactEmail:
         return JsonResponse({'error':'This event is not claimable since there is no contact info'},
@@ -698,7 +854,7 @@ def reassignEvent(request):
         event = Event.objects.get(pk=eid)
     except ObjectDoesNotExist:
         return render(request, "registration/email_verification_error.html", {"errorMessage":
-                'User not found', 
+                'Event not found', 
             }, status=400)
 
     if not default_token_generator.check_token(user, token):

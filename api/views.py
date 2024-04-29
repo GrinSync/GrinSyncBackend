@@ -418,10 +418,11 @@ def updateInterestedTags(request):
     user = request.user
     user.interestedTags.clear()
 
-    if not tags:
-        user.interestedTags.set(Tag.objects.filter(selectedDefault = True))
-        user.save()
-        return JsonResponse('Tags set to default selections', safe=False)
+    ## RIP
+    # if not tags:
+    #     user.interestedTags.set(Tag.objects.filter(selectedDefault = True))
+    #     user.save()
+    #     return JsonResponse('Tags set to default selections', safe=False)
 
     for tag in tags.split(';'):
         try:

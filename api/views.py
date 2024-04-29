@@ -896,6 +896,48 @@ def tagManagerPage(request):
 
     return render(request, "tag_manager.html", {"tags" : tags})
 
+@api_view(['POST'])
+def createOrg(request):
+    """ Creates a new student organization in the database """
+
+    # Get the info from the request, and provide default values if the keys are not found
+    # The POST.get here is because we've recieved a post request so we need to look for the info in that format
+    name = request.POST.get("name", None)
+    email = request.POST.get("organization's email", None)
+    description = request.POST.get("description", None)
+
+    # Check that all of the required fields were provided
+    if not (name and email and description):
+        return JsonResponse({'error' : 'Integrity Error: Not all required fields were provided'},
+                                safe=False, status = 400)
+
+    # Make sure that student and faculty accounts have grinnell.edu emails for validation
+    if (email.split('@')[1].lower() != "grinnell.edu"):
+        return JsonResponse({'error' :
+                             'Account Validation Error: organization account registered without grinnell.edu email'},
+                                safe=False, status = 422)
+
+    # Actually interact with the database and create the org
+    try:
+        org = Organization.objects.create_org(name = name, email = email.lower(), username = email.lower(), 
+                                              description = description, is_active = False)
+        org.save()
+
+    # Since the database constraints are checked at creation, make sure they all passed
+    except IntegrityError:
+        # TODO: Check if same org exists but is just inactive. Don't leak info. Delete the inactive one
+        return JsonResponse({'error' : 'Integrity Error: It\'s possible that org name is already in use'},
+                                safe=False, status = 400)
+
+    try:
+        sendEmailVerification(request, org)
+    except SMTPException:
+        org.delete()
+        return JsonResponse({'error' : "Email failed to send, please try registering again"}, safe=False, status = 400)
+
+    # Return the newly created org id. Although the status code is probably more important
+    return JsonResponse({'id' : org.id}, safe=False, status = 200)
+
 
 ## In case we need later, here was an attempt at a custom login & token return implementation
 # from django.contrib.auth import authenticate

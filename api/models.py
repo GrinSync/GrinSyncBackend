@@ -26,9 +26,6 @@ class Organization(models.Model):
     name = models.CharField(max_length = 64, unique=True)
     email = models.EmailField(blank=False, null=False, unique=True)
     studentLeaders = models.ManyToManyField(User, blank=False, related_name='childOrgs')
-<<<<<<< HEAD
-    description = models.TextField(blank = True)
-=======
     is_active = models.BooleanField(default=False) # Naming to keep consistent with django is_active for users
 
     # These are here solely so that we can make tokens for orgs
@@ -39,7 +36,6 @@ class Organization(models.Model):
     def get_email_field_name(self):
         """ Yeah, just here so the token thing doesn't flip """
         return 'email'
->>>>>>> ea44eac3baa1a7425a9c018dcd3f0e11778e10f7
 
 class Tag(models.Model):
     """ A model for event filtering tags """

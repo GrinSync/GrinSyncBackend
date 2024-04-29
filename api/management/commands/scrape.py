@@ -132,4 +132,4 @@ class Command(BaseCommand):
         #parser.add_argument("poll_ids", nargs="+", type=int)
 
     def handle(self, *args, **options):
-        scrapeCalendar(20)
+        scrapeCalendar()

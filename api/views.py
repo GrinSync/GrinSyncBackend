@@ -99,9 +99,14 @@ def createUser(request):
 
     # Since the database constraints are checked at creation, make sure they all passed
     except IntegrityError:
-        # TODO: Check if same user exists but is just inactive. Don't leak info. Delete the inactive one
-        return JsonResponse({'error' : 'Integrity Error: It\'s possible that username is already in use'},
+        curCopy = User.objects.get(username = email.lower())
+        if curCopy.is_active:
+            return JsonResponse({'error' : 'Integrity Error: It\'s possible that username is already in use'},
                                 safe=False, status = 400)
+        curCopy.delete()
+        user = User.objects.create_user(first_name = firstName, last_name = lastName,
+                                        type = userType, email = email.lower(), username = email.lower(),
+                                        password = password, is_active = False)
 
     try:
         sendEmailVerification(request, user)

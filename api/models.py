@@ -55,7 +55,6 @@ class Event(models.Model):
     # External Infomation
     liveWhaleID = models.PositiveIntegerField(blank=True, null=True, unique=True)
     contactEmail = models.EmailField(blank=True, null=True)
-    # TODO: Contact or contact's email
     # Also maybe geolocation info?
 
     def save(self, *args, **kwargs): # pylint: disable=unused-argument

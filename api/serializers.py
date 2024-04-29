@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Tag, User, Event
+from .models import Organization, Tag, User, Event
 
 class UserSerializer(serializers.ModelSerializer):
     """ Serializes a User model """
@@ -69,3 +69,10 @@ class TagSerializer(serializers.ModelSerializer):
         """ Meta """
         model = Tag
         fields = ['name','id','selectedDefault']
+
+class OrgSerializer(serializers.ModelSerializer):
+    """ Serializes a Org model """
+    class Meta:
+        """ Meta """
+        model = Organization
+        fields = '__all__'

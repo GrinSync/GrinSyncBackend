@@ -26,6 +26,7 @@ class Organization(models.Model):
     name = models.CharField(max_length = 64, unique=True)
     email = models.EmailField(blank=False, null=False, unique=True)
     studentLeaders = models.ManyToManyField(User, blank=False, related_name='childOrgs')
+    description = models.TextField(blank = True)
     is_active = models.BooleanField(default=False) # Naming to keep consistent with django is_active for users
 
     # These are here solely so that we can make tokens for orgs
@@ -33,7 +34,7 @@ class Organization(models.Model):
     password = models.CharField(default="HMMMMMMDOESTHISWORK?", max_length=64) # I don't care if this makes the token less
     # ^ DON'T USE THIS FOR ANYTHING                             secure, we're just using it for email confirmation anyways
 
-    def get_email_field_name(self):
+    def get_email_field_name(self): #pylint: disable=C0103
         """ Yeah, just here so the token thing doesn't flip """
         return 'email'
 

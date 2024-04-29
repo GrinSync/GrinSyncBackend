@@ -176,6 +176,12 @@ def createOrg(request):
         return JsonResponse({'error' : 'Integrity Error: Not all required fields were provided'},
                                 safe=False, status = 400)
 
+    # Make sure that student and faculty accounts have grinnell.edu emails for validation
+    if email.split('@')[1].lower() != "studentorg.grinnell.edu":
+        return JsonResponse({'error' :
+                             'Account Validation Error: Student Org registered without studentorg.grinnell.edu email'},
+                                safe=False, status = 422)
+
     warnings = ''
     # Actually interact with the database and create the user
     try:
@@ -397,12 +403,16 @@ def createEvent(request):
 def updateInterestedTags(request):
     """ Updates an user's interested tags """
     tags = request.POST.get("tags", None)
-    if not tags:
-        return JsonResponse({'error' : 'No tag names provided'}, safe=False, status = 400)
 
     user = request.user
     user.interestedTags.clear()
-    for tag in tags.split(','):
+
+    if not tags:
+        user.interestedTags.set(Tag.objects.filter(selectedDefault = True))
+        user.save()
+        return JsonResponse('Tags set to default selections', safe=False)
+
+    for tag in tags.split(';'):
         try:
             user.interestedTags.add(Tag.objects.get(name=tag))
         except ObjectDoesNotExist:

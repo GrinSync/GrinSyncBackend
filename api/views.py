@@ -305,6 +305,17 @@ def confirmOrgClaim(request):
     org.save()
     return render(request, "registration/org_co_add_verification_confirmation.html", context={'orgName':org.name})
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getUserOrgs(request):
+    """ Return a user's preferred tags. """
+    user = request.user
+
+    # Seralize the user object and return that info
+    tagsJson = serializers.OrgSerializer(user.childOrgs.all(), many = True)
+    return JsonResponse(tagsJson.data, safe=False)
+
+
 
 @api_view(['POST']) # Make sure the request is the correct format
 @permission_classes([IsAuthenticated])

@@ -25,6 +25,7 @@ class Organization(models.Model):
     """ A model for a student org """
     name = models.CharField(max_length = 64)
     studentLeaders = models.ManyToManyField(User, blank=False, related_name='childOrgs')
+    description = models.TextField(blank = True)
 
 class Tag(models.Model):
     """ A model for event filtering tags """

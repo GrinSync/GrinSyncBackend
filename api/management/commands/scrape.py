@@ -1,14 +1,13 @@
 import datetime
 import json
 import re
-import string
 import pytz
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 from requests import get
 
 from api.aux_functions import addEventTags
-from api.models import Event, Tag, User
+from api.models import Event, User
 
 CST = pytz.timezone('America/Chicago')
 
@@ -18,7 +17,7 @@ autoPopulateUser = User.objects.get(username="moderator")
 
 # def checkGrinnellTerms(body):
 #     body = body.lower()
-#     # TODO: Make editable in admin settings
+#     # If we implment this for additional tags, we'll want to make it editable in admin settings
 #     validTerms = ['hssc', 'humanities and social science', 'noyce', 'jrc', 'rosenfield center', 'burling',
 #                   'bucksbaum', 'steiner', 'crssj', 'forum', 'kington', 'harris', 'herrick', 'main hall',
 #                   'cleveland', 'younker', 'smith', 'langan', 'rawson', 'gates', 'clark', 'cowles', 'dibble',
@@ -44,9 +43,6 @@ def scrapeCalendar(num_events = "false"):
     url =JSON_URL + str(num_events)
     events = json.loads(get(url, timeout=20).text)['data']
 
-    # tags = []
-    # TODO: Collect all possible tags
-
     for event in events: # TODO: Add filtering for intended audience (at least make sure it's not profs)
                          # And by location. And add tags for student orgs
         title = event['title']
@@ -63,8 +59,11 @@ def scrapeCalendar(num_events = "false"):
         else:
             location = event['location']
 
-        if event['description']: # TODO: Parse HTML
-            description = event['description'].replace("<p>","").replace("</p>","").replace("\n","").strip()
+        if event['description']:
+            description = event['description'].strip()
+            ## TODO: Do we want to remove html or display it?
+            # https://stackoverflow.com/questions/53815485/how-to-show-html-string-in-text-widget-flutter
+            # description = re.sub('<[^<]+?>', '', event['description']).replace('&#160;','').strip() # Remove html
         else:
             description = "" #pylint: disable=C0103
 
@@ -100,14 +99,14 @@ def scrapeCalendar(num_events = "false"):
         try:
             event = Event.objects.get(liveWhaleID = externalID)
             if event.host != autoPopulateUser: # We want to avoid changing them if someone has claimed it
-                 continue
+                continue
 
-            eventAsSet = Event.objects.filter(liveWhaleID = externalID).update(
+            Event.objects.filter(liveWhaleID = externalID).update(
                                     host = autoPopulateUser, title = title,
                                     location = location, start = startTime, end = endTime,
                                     description = description, studentsOnly = False,
                                     liveWhaleID = externalID, contactEmail = contactEmail)
-            # eventAsSet.save()
+
             event = Event.objects.get(liveWhaleID = externalID)
         except ObjectDoesNotExist:
             event = Event.objects.create(host = autoPopulateUser, title = title,
@@ -119,17 +118,10 @@ def scrapeCalendar(num_events = "false"):
         addEventTags(event, tags)
 
 
-
-# TODO: Tabling tags
-
 ## This is what allows us to run this as a command from the console. The command name is the filename
 class Command(BaseCommand):
     """ The wraper to run this command from the terminal """
     help = "Scrapes Grinnell's events calendar and adds them to GrinSync's database"
-
-    # def add_arguments(self, parser):
-        # TODO: Add overwrite, and potentally others
-        #parser.add_argument("poll_ids", nargs="+", type=int)
 
     def handle(self, *args, **options):
         scrapeCalendar()

@@ -283,7 +283,7 @@ def getEvent(request):
 @api_view(['GET'])
 def search(request): # TODO: decide if want one search for everything or different for events vs users
     """ Return all the matching events for a given search. Takes: query """
-    tags = request.GET.get("tags", None) 
+    tags = request.GET.get("tags", None)
     query = request.GET.get("query", None)
     if not query:
         return JsonResponse({'error' : "Required Argument 'query' was not provided"}, safe=False, status = 400)

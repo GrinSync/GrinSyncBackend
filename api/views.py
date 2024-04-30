@@ -326,7 +326,7 @@ def createEvent(request):
     # The POST.get here is because we've sent a post request so we need to look for the info in that format
     title = request.POST.get("title", None) # TODO: Filter for profanity
     description = request.POST.get("description", "") # Optional
-    orgID = request.POST.get("org_id", "") # Optional
+    orgName = request.POST.get("orgName", "") # Optional
     location = request.POST.get("location", None)
     studentsOnly = request.POST.get("studentsOnly", None)
     tags = request.POST.get("tags", "") # Optional?
@@ -347,8 +347,8 @@ def createEvent(request):
                                 safe=False, status = 400)
 
     # Associate an event with an organization
-    if orgID != "":
-        hostOrg = Organization.objects.get(id=orgID)
+    if orgName != "":
+        hostOrg = Organization.objects.get(name=orgName)
     else:
         hostOrg = None
 
@@ -708,6 +708,7 @@ def editEvent(request):
     newLocation = request.POST.get("location", None)
     newTitle = request.POST.get("title", None)
     newDescription = request.POST.get("description", None)
+    newOrg = request.POST.get("orgName", None)
     newStudentsOnly = request.POST.get("studentsOnly", None)
     newTags = request.POST.get("tags", None)
     newRepeatEnd = request.POST.get("repeatDate", None)
@@ -722,6 +723,10 @@ def editEvent(request):
                                     safe=False, status = 400)
         if newRepeatEnd.tzinfo is None:
             newRepeatEnd = CST.localize(newRepeatEnd)
+
+        # Associate an event with an organization
+    if newOrg:
+        newOrg = Organization.objects.get(name=newOrg)
 
     firstEventpk = event.pk
     while event:
@@ -748,6 +753,10 @@ def editEvent(request):
         # Update the description
         if newDescription:
             event.description = newDescription
+
+        # Update the org
+        if newOrg:
+            event.parentOrg = newOrg
 
         # Update studentsOnly
         if newStudentsOnly:

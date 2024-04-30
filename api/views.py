@@ -308,12 +308,21 @@ def confirmOrgClaim(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def getUserOrgs(request):
-    """ Return a user's preferred tags. """
+    """ Returns a user's child orgs. """
     user = request.user
 
-    # Seralize the user object and return that info
-    tagsJson = serializers.OrgSerializer(user.childOrgs.all(), many = True)
-    return JsonResponse(tagsJson.data, safe=False)
+    # Seralize the org objects and return that info
+    orgsJson = serializers.OrgSerializer(user.childOrgs.all(), many = True)
+    return JsonResponse(orgsJson.data, safe=False)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getAllOrgs(request):
+    """ Returns all valid student orgs. """
+
+    # Seralize the org objects and return that info
+    orgsJson = serializers.OrgSerializer(Organization.objects.all(), many = True)
+    return JsonResponse(orgsJson.data, safe=False)
 
 
 
@@ -326,7 +335,7 @@ def createEvent(request):
     # The POST.get here is because we've sent a post request so we need to look for the info in that format
     title = request.POST.get("title", None) # TODO: Filter for profanity
     description = request.POST.get("description", "") # Optional
-    orgName = request.POST.get("orgName", "") # Optional
+    orgName = request.POST.get("orgName", None) # Optional
     location = request.POST.get("location", None)
     studentsOnly = request.POST.get("studentsOnly", None)
     tags = request.POST.get("tags", "") # Optional?
@@ -347,8 +356,11 @@ def createEvent(request):
                                 safe=False, status = 400)
 
     # Associate an event with an organization
-    if orgName != "":
-        hostOrg = Organization.objects.get(name=orgName)
+    if orgName:
+        try:
+            hostOrg = Organization.objects.get(name=orgName)
+        except ObjectDoesNotExist:
+            return HttpResponse(f"Org with name '{orgName}' does not exist", status = 404)
     else:
         hostOrg = None
 
@@ -727,6 +739,7 @@ def editEvent(request):
         # Associate an event with an organization
     if newOrg:
         newOrg = Organization.objects.get(name=newOrg)
+
 
     firstEventpk = event.pk
     while event:

@@ -20,7 +20,7 @@ import api.serializers as serializers
 # import django.middleware.csrf as csrf
 # from rest_framework.views import APIView
 # from rest_framework.response import Response
-from api.aux_functions import addEventTags
+from api.aux_functions import addEventTags, setEventTags
 from api.models import Event, Organization, Tag, User
 
 CST = pytz.timezone('America/Chicago')
@@ -30,6 +30,11 @@ def getAutoPopulatedEventUser():
     return User.objects.get(username="moderator")
 
 # TODO: What happens if a non student creates a student only event? We prob let this happen, but can they edit it?
+
+def home(request):
+    """ The landing page for people interested in the app """
+
+    return render(request, "home.html")
 
 @ensure_csrf_cookie
 @api_view(['GET'])
@@ -338,7 +343,7 @@ def createEvent(request):
     orgName = request.POST.get("orgName", None) # Optional
     location = request.POST.get("location", None)
     studentsOnly = request.POST.get("studentsOnly", None)
-    tags = request.POST.get("tags", "") # Optional?
+    tags = request.POST.get("tags", None) # Optional?
     start = request.POST.get("start", None)
     end = request.POST.get("end", None)
 
@@ -379,6 +384,10 @@ def createEvent(request):
     # Turn studentsOnly from a string to a bool
     studentsOnly = studentsOnly.lower() in ['true', '1', 't', 'y', 'yes', 'yeah', 'yup', 'no cap', 'uh-huh']
 
+    if tags:
+        tags = tags.split(";")
+    else:
+        tags = []
 
     # Stuff for repeating events
     if (repeatDays != 0) or (repeatMonths != 0):
@@ -391,7 +400,7 @@ def createEvent(request):
         firstEvent = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
                                     location = location, start = startDT, end = endDT,
                                     description = description, studentsOnly = studentsOnly)
-        addEventTags(firstEvent, tags)
+        addEventTags(firstEvent, tags) # addEventTags saves the event too, which feels harmless, but idk
 
         prevEvent = firstEvent
         startDT = startDT + offset
@@ -778,9 +787,7 @@ def editEvent(request):
         # Update the tags
         if newTags:
             tags = newTags.split(';')
-            event.tags.clear()
-            for tag in tags:
-                event.tags.add(Tag.objects.get(name = tag))
+            event = setEventTags(event, tags)
 
 
         event.save()

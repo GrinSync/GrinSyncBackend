@@ -20,6 +20,7 @@ from rest_framework.authtoken import views as tokenViews
 from api import views as apiViews
 
 urlpatterns = [
+    path('', apiViews.home, name = 'homePage'),
     path('admin/', admin.site.urls),
     path('api/search', apiViews.search, name = 'search'),
     path('api/getUser', apiViews.getUser, name = 'getUser'),

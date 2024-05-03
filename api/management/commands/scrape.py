@@ -59,11 +59,13 @@ def scrapeCalendar(num_events = "false"):
         else:
             location = event['location']
 
+        if not location: # The calendar contains all day non-location holidays and stuff that aren't really *events*
+            continue
+
+        location = location.replace('&#160;','').replace('&amp;','&')
+
         if event['description']:
-            description = event['description'].strip()
-            ## TODO: Do we want to remove html or display it?
-            # https://stackoverflow.com/questions/53815485/how-to-show-html-string-in-text-widget-flutter
-            # description = re.sub('<[^<]+?>', '', event['description']).replace('&#160;','').strip() # Remove html
+            description = event['description'].strip() # We won't clear the html here cause we're rendering it on the frontend
         else:
             description = "" #pylint: disable=C0103
 
@@ -89,12 +91,6 @@ def scrapeCalendar(num_events = "false"):
         else:
             contactEmail = None
 
-        if not location:
-            continue
-
-        # print(f"{event['title']} is taking place at {location} at "
-        #     f"{startTime.astimezone(CST).strftime('%H:%M')}-{endTime.astimezone(CST).strftime('%H:%M')}")
-
 
         try:
             event = Event.objects.get(liveWhaleID = externalID)
@@ -115,7 +111,7 @@ def scrapeCalendar(num_events = "false"):
                                         # if it was on the college's public calendar, we don't need to hide it
                                         # but also I know not all are, so maybe find a clever way to do this
                                     liveWhaleID = externalID, contactEmail = contactEmail)
-        addEventTags(event, tags)
+        addEventTags(event, tags, create_new = True)
 
 
 ## This is what allows us to run this as a command from the console. The command name is the filename

@@ -69,3 +69,94 @@ table.tagTable h4{
     border-width: 1px;
     height: 28px;
 }
+
+
+/* For the home page */
+div.welcomeHeader {
+    text-align: center;
+    margin-bottom: 10vh;
+}
+
+div.welcomeHeader h2{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 45pt;
+    font-variant-caps: small-caps;
+}
+
+div.welcomeHeader h3{
+    font-family: 'Courier New', Courier, monospace;
+    color: lightslategray; 
+}
+
+span.inText{
+    color: #625e5e;
+}
+
+.getTheApp{
+    padding: 2vw;
+    max-width: 76vw;
+    margin-left: 10vw;
+    padding-bottom: 10vh;
+    /*! background-color: #dfdede; */
+    border-radius: 8px;
+    text-align: center;
+    border: 3px solid #dfdede;
+}
+
+.getTheApp h2{
+    margin-bottom: 15vh; 
+    font-family: Geneva, Tahoma, sans-serif;
+    font-size: xx-large;
+}
+
+.getTheApp a{
+    padding: 2vw 4vw;
+    border-radius: 10px;
+    margin: 1vw 4vw;
+    background: red;
+    color: #dfdede;
+    text-decoration: none;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-weight: bold;
+    font-size: 20pt;
+}
+
+div.overview{
+    text-align: center;
+    background-color: #eeeeeeee;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    margin: 5vw;
+    padding: 1vw;
+    padding-bottom: 8vh;
+}
+
+div.overview h2{
+    font-weight: bold;
+    padding-top: 8vh;
+    padding-bottom: .5vh;
+}
+
+div.overview p{
+    font-family: Geneva, Tahoma, sans-serif;
+    padding: 0 15%;
+    line-height: 1.7;
+}
+
+div.overview p a{
+    color: #ff2f2f;
+    text-decoration: none;
+}
+div.overview p a:hover{
+    color: #970c0c;
+    text-decoration: none;
+}
+
+div.overview p code{
+    border: 1px solid black;
+    border-radius: 4px;
+    background-color: #d8d8d8;
+    font-family: monospace;
+    padding: 2px 4px;
+    font-weight: bold;
+    color: #ff2f2f;
+}

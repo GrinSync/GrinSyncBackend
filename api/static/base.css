@@ -121,6 +121,10 @@ span.inText{
     font-size: 20pt;
 }
 
+.getTheApp a:hover{
+    background-color: #625e5e;
+}
+
 div.appDemoImages{
     position: relative;
     padding-bottom: 45vw;

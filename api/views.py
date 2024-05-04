@@ -411,7 +411,7 @@ def createEvent(request):
             endDT = datetime.strptime(end, "%Y-%m-%d %H:%M:%S.%f")
             assert startDT < endDT
         else:
-            endDT = startDT.replace(hour=23, minute=59)
+            endDT = startDT + timedelta(hours = 1)
     except (ValueError, AssertionError):
         return JsonResponse({'error' : "Invalid DateTime: check your 'start' and 'end' fields"},
                                 safe=False, status = 400)
@@ -590,9 +590,9 @@ def getUpcoming(request):
                 return JsonResponse({'error':f"Requested tag '{tag}' is not a valid tag"}, safe=False, status = 400)
         tags = tagObjs
 
-    today = datetime.today().replace(minute=0) # assigns today's date to a variable
-    upcoming = Event.objects.filter(start__gte=today) # gets events with a starting date >= to today
-    upcoming = upcoming.exclude(start__gt = today + timedelta(weeks = 1)) # limits upcoming events a week out
+    now = datetime.now() # assigns the current time
+    upcoming = Event.objects.filter(end__gte=now) # gets events with an ending time >= to now
+    upcoming = upcoming.exclude(start__gt = now + timedelta(weeks = 1)) # limits upcoming events a week out
     if tags != "ALL":
         upcoming = upcoming.filter(tags__in = tags)
 

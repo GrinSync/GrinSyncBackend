@@ -51,7 +51,9 @@ urlpatterns = [
     path('api/confirmOrg', apiViews.confirmOrg, name = 'addCoLead'),
     path('api/claimOrg', apiViews.claimOrg, name = 'claimOrg'),
     path('api/confirmOrgClaim', apiViews.confirmOrgClaim, name = 'addCoLead'),
+    path('api/getOrg', apiViews.getOrg, name = 'getOrg'),
     path('api/getUserOrgs', apiViews.getUserOrgs, name = 'usersOrgs'),
     path('api/getAllOrgs', apiViews.getAllOrgs, name = 'allOrgs'),
+    path('api/getOrgEvents', apiViews.getOrgEvents, name = 'getOrgsEvents'),
     path('tags/', apiViews.tagManagerPage, name = 'tagManager'),
 ]

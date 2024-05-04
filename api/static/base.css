@@ -121,6 +121,33 @@ span.inText{
     font-size: 20pt;
 }
 
+div.appDemoImages{
+    position: relative;
+    padding-bottom: 45vw;
+    margin-left: 50%;
+}
+
+div.appDemoImages img{
+    width: 20vw;
+    left: -10vw;
+    position: absolute;
+}
+
+.hoverPage:hover + .hiddenPage {
+    display: block;
+}
+.hiddenPage {
+    display: none;
+    /*! scale: 90%; */
+    border: 1vw solid black;
+    border-radius: 50px;
+    top: -24px;
+    left: -11vw !important;
+}
+.hiddenPage:hover{
+    display: block;
+}
+
 div.overview{
     text-align: center;
     background-color: #eeeeeeee;

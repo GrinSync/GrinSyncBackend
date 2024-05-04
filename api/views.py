@@ -312,6 +312,23 @@ def confirmOrgClaim(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def getOrg(request):
+    """ Returns a user's child orgs. """
+    orgID = request.GET.get("id", None) # TODO: Filter for profanity
+    try:
+        org = Organization.objects.get(id=orgID)
+    except ObjectDoesNotExist:
+        try:
+            org = Organization.objects.get(name=orgID)
+        except ObjectDoesNotExist:
+            return HttpResponse(f"Org with id/name '{orgID}' does not exist", status = 404)
+
+    # Seralize the org objects and return that info
+    orgsJson = serializers.OrgSerializer(org)
+    return JsonResponse(orgsJson.data, safe=False)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def getUserOrgs(request):
     """ Returns a user's child orgs. """
     user = request.user
@@ -328,6 +345,24 @@ def getAllOrgs(request):
     # Seralize the org objects and return that info
     orgsJson = serializers.OrgSerializer(Organization.objects.all(), many = True)
     return JsonResponse(orgsJson.data, safe=False)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getOrgEvents(request):
+    """ Returns a user's child orgs. """
+    orgID = request.GET.get("id", None) # TODO: Filter for profanity
+    try:
+        org = Organization.objects.get(id=orgID)
+    except ObjectDoesNotExist:
+        try:
+            org = Organization.objects.get(name=orgID)
+        except ObjectDoesNotExist:
+            return HttpResponse(f"Org with id/name '{orgID}' does not exist", status = 404)
+
+    events = org.childEvents.all()
+    # Seralize the org objects and return that info
+    eventsJson = serializers.EventSerializer(events, many = True)
+    return JsonResponse(eventsJson.data, safe=False)
 
 
 

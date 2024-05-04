@@ -72,6 +72,12 @@ class TagSerializer(serializers.ModelSerializer):
 
 class OrgSerializer(serializers.ModelSerializer):
     """ Serializes a Org model """
+    orgEvents = serializers.SerializerMethodField('_orgEvents')
+
+    # Use this method for the custom field
+    def _orgEvents(self, obj):
+        # eventIDs = []
+        return list(map(lambda x : x.id, obj.childEvents.all()))
     class Meta:
         """ Meta """
         model = Organization

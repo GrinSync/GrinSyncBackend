@@ -48,7 +48,8 @@ class Event(models.Model):
     """ Event Model - stores info for the events we're going to serve """
     # Basic event info
     host = models.ForeignKey(User, related_name='usersEvents', on_delete = models.DO_NOTHING)
-    parentOrg = models.ForeignKey(Organization, blank = True, null = True, on_delete = models.DO_NOTHING)
+    parentOrg = models.ForeignKey(Organization, related_name='childEvents', blank = True, null = True,
+                                    on_delete = models.DO_NOTHING)
     title = models.CharField(max_length = 64)
     description = models.TextField(blank = True)
     start = models.DateTimeField(blank = False, null = False)

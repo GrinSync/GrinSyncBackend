@@ -55,7 +55,6 @@ class Event(models.Model):
     start = models.DateTimeField(blank = False, null = False)
     end = models.DateTimeField(blank = False, null = False)
     location = models.CharField(max_length = 64, blank = True, null = True)
-    ## TODO: Should we make it so people can search by location? If so use ForeignKey
 
     # Other stuff we might want to record about events
     studentsOnly = models.BooleanField(blank = False) # We'll store this as its own field for later
@@ -68,7 +67,8 @@ class Event(models.Model):
     # External Infomation
     liveWhaleID = models.PositiveIntegerField(blank=True, null=True, unique=True)
     contactEmail = models.EmailField(blank=True, null=True)
-    # Also maybe geolocation info?
+    lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    long = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
 
     def save(self, *args, **kwargs): # pylint: disable=unused-argument
         if self.host is None and self.parentOrg is None:

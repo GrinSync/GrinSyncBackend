@@ -45,7 +45,7 @@ def scrapeCalendar(num_events = "false"):
 
     for event in events: # TODO: Add filtering for intended audience (at least make sure it's not profs)
                          # And by location. And add tags for student orgs
-        title = event['title']
+        title = event['title'].strip().replace('&amp;','&')
         startTime = datetime.datetime.strptime(event['date_utc'], "%Y-%m-%d %H:%M:%S")
         startTime = pytz.utc.localize(startTime)
         if event['date2_utc']:
@@ -63,6 +63,12 @@ def scrapeCalendar(num_events = "false"):
             continue
 
         location = location.replace('&#160;','').replace('&amp;','&')
+        if event['location_latitude'] and event['location_longitude']:
+            lat = event['location_latitude']
+            long = event['location_longitude']
+        else:
+            lat = None
+            long = None
 
         if event['description']:
             description = event['description'].strip() # We won't clear the html here cause we're rendering it on the frontend
@@ -101,7 +107,8 @@ def scrapeCalendar(num_events = "false"):
                                     host = autoPopulateUser, title = title,
                                     location = location, start = startTime, end = endTime,
                                     description = description, studentsOnly = False,
-                                    liveWhaleID = externalID, contactEmail = contactEmail)
+                                    liveWhaleID = externalID, contactEmail = contactEmail,
+                                    lat = lat, long = long)
 
             event = Event.objects.get(liveWhaleID = externalID)
         except ObjectDoesNotExist:
@@ -110,7 +117,8 @@ def scrapeCalendar(num_events = "false"):
                                     description = description, studentsOnly = False, # I'm going to assume thats
                                         # if it was on the college's public calendar, we don't need to hide it
                                         # but also I know not all are, so maybe find a clever way to do this
-                                    liveWhaleID = externalID, contactEmail = contactEmail)
+                                    liveWhaleID = externalID, contactEmail = contactEmail,
+                                    lat = lat, long = long)
         addEventTags(event, tags, create_new = True)
 
 

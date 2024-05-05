@@ -474,12 +474,6 @@ def updateInterestedTags(request):
     user = request.user
     user.interestedTags.clear()
 
-    ## RIP
-    # if not tags:
-    #     user.interestedTags.set(Tag.objects.filter(selectedDefault = True))
-    #     user.save()
-    #     return JsonResponse('Tags set to default selections', safe=False)
-
     for tag in tags.split(';'):
         try:
             user.interestedTags.add(Tag.objects.get(name=tag))
@@ -490,11 +484,13 @@ def updateInterestedTags(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated]) # Make sure user is logged in
 def getEvent(request):
     """ Return all the info for an event. Takes: id """
     eid = request.GET.get("id", "")
     event = Event.objects.get(pk = eid)
+    if (not request.user.is_authenticated) or (request.user.type != "STU"):
+        if event.studentsOnly:
+            return JsonResponse({'error':'This event is student only'}, status = 401)
     eventJson = serializers.EventSerializer(event, context={'request': request})
     return JsonResponse(eventJson.data, safe=False)
 

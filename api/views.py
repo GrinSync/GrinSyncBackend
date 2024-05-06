@@ -364,6 +364,70 @@ def getOrgEvents(request):
     eventsJson = serializers.EventSerializer(events, many = True)
     return JsonResponse(eventsJson.data, safe=False)
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def followOrg(request):
+    """ Adds an Organization to a user's followedOrgs list. Takes: id (of org) """
+    oid = request.POST.get("id", "")
+    try:
+        org = Organization.objects.get(pk = oid)
+    except ObjectDoesNotExist:
+        return HttpResponse(f"Organization with id '{oid}' does not exist", status = 404)
+    except ValueError:
+        return HttpResponse("No id provided", status = 404)
+
+    user = request.user
+    user.followedOrgs.add(org)
+    user.save()
+    orgJson = serializers.OrgSerializer(org, context={'request': request})
+    return JsonResponse(orgJson.data, safe=False, status=200)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def unfollowOrg(request):
+    """ Removes an Organization from a user's followeOrgs list. Takes: id (of org) """
+    oid = request.POST.get("id", "")
+    try:
+        org = Organization.objects.get(pk = oid)
+    except ObjectDoesNotExist:
+        return HttpResponse(f"Organization with id '{oid}' does not exist", status = 404)
+    except ValueError:
+        return HttpResponse("No id provided", status = 404)
+
+    user = request.user
+    user.followedOrgs.remove(org)
+    user.save()
+    orgJson = serializers.OrgSerializer(org, context={'request': request})
+    return JsonResponse(orgJson.data, safe=False, status=200)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def toggleFollowedOrg(request):
+    """ Toggles whether or not the provided org is followed by the requesting user. Takes: id (of org) """
+    oid = request.POST.get("id", "")
+    try:
+        org = Organization.objects.get(pk = oid)
+    except ObjectDoesNotExist:
+        return HttpResponse(f"Organization with id '{oid}' does not exist", status = 404)
+    except ValueError:
+        return HttpResponse("No id provided", status = 404)
+
+    user = request.user
+    if org in user.followedOrgs.all():
+        user.followedOrgs.remove(org)
+    else:
+        user.followedOrgs.add(org)
+    user.save()
+    orgJson = serializers.OrgSerializer(org, context={'request': request})
+    return JsonResponse(orgJson.data, safe=False, status=200)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated]) # Make sure user is logged in
+def getFollowedOrgs(request):
+    """ Return all of a user's followed orgs. """
+    user = request.user
+    orgJson = serializers.OrgSerializer(user.followedOrgs.all(), many = True, context={'request': request})
+    return JsonResponse(orgJson.data, safe=False, status=200)
 
 
 @api_view(['POST']) # Make sure the request is the correct format
@@ -654,7 +718,7 @@ def likeEvent(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated]) # Make sure user is logged in
 def unlikeEvent(request):
-    """ Adds an event to a user's like events list. Takes: id (of event) """
+    """ Removes an event to a user's like events list. Takes: id (of event) """
     eid = request.POST.get("id", "")
     try:
         event = Event.objects.get(pk = eid)
@@ -672,7 +736,7 @@ def unlikeEvent(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated]) # Make sure user is logged in
 def toggleLikedEvent(request):
-    """ Adds an event to a user's like events list. Takes: id (of event) """
+    """ Toggles the liked status of an event for the requesting user. Takes: id (of event) """
     eid = request.POST.get("id", "")
     try:
         event = Event.objects.get(pk = eid)
@@ -692,7 +756,7 @@ def toggleLikedEvent(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated]) # Make sure user is logged in
-def getlikedEvents(request):
+def getLikedEvents(request):
     """ Return all of a users liked events. """
     user = request.user
     eventJson = serializers.EventSerializer(user.likedEvents.all(), many = True, context={'request': request})

@@ -18,8 +18,11 @@ class User(AbstractUser):
     # Whether they're student, faculty, or community
     TYPES = TYPES  # Need this so User.TYPES works later
     type = models.CharField(choices=TYPES, max_length=3, blank=False, default="COM")
+
+    # Personalization
     likedEvents = models.ManyToManyField('Event', blank=True, related_name="likedUsers")
-    interestedTags = models.ManyToManyField('Tag', blank=True)
+    interestedTags = models.ManyToManyField('Tag', blank=True, related_name="devotees")
+    followedOrgs = models.ManyToManyField('Organization', blank=True, related_name="followers")
 
 class Organization(models.Model):
     """ A model for a student org """

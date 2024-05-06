@@ -27,6 +27,7 @@ class User(AbstractUser):
 class Organization(models.Model):
     """ A model for a student org """
     name = models.CharField(max_length = 64, unique=True)
+    alias = models.CharField(max_length = 16, unique=True, blank=True, null=True)
     email = models.EmailField(blank=False, null=False, unique=True)
     studentLeaders = models.ManyToManyField(User, blank=False, related_name='childOrgs')
     description = models.TextField(blank = True)

@@ -173,6 +173,7 @@ def createOrg(request):
     # Get the info from the request, and provide default values if the keys are not found
     # The POST.get here is because we've sent a post request so we need to look for the info in that format
     name = request.POST.get("name", None)
+    alias = request.POST.get("alias", None)
     email = request.POST.get("email", None)
     additionalLeaders = request.POST.get("coleads", None) # Optional
 
@@ -190,7 +191,7 @@ def createOrg(request):
     warnings = ''
     # Actually interact with the database and create the user
     try:
-        org = Organization.objects.create(name = name, email = email)
+        org = Organization.objects.create(name = name, email = email, alias = alias)
         org.studentLeaders.add(request.user)
         if additionalLeaders:
             for lead in additionalLeaders.split(';'):
@@ -334,7 +335,7 @@ def getUserOrgs(request):
     user = request.user
 
     # Seralize the org objects and return that info
-    orgsJson = serializers.OrgSerializer(user.childOrgs.all(), many = True)
+    orgsJson = serializers.OrgSerializer(user.childOrgs.all(), many = True, context={'request': request})
     return JsonResponse(orgsJson.data, safe=False)
 
 @api_view(['GET'])
@@ -343,7 +344,7 @@ def getAllOrgs(request):
     """ Returns all valid student orgs. """
 
     # Seralize the org objects and return that info
-    orgsJson = serializers.OrgSerializer(Organization.objects.all(), many = True)
+    orgsJson = serializers.OrgSerializer(Organization.objects.all(), many = True, context={'request': request})
     return JsonResponse(orgsJson.data, safe=False)
 
 @api_view(['GET'])

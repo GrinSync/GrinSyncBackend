@@ -73,11 +73,18 @@ class TagSerializer(serializers.ModelSerializer):
 class OrgSerializer(serializers.ModelSerializer):
     """ Serializes a Org model """
     orgEvents = serializers.SerializerMethodField('_orgEvents')
+    isFollowed = serializers.SerializerMethodField('_isFollowed')
 
     # Use this method for the custom field
     def _orgEvents(self, obj):
         # eventIDs = []
         return list(map(lambda x : x.id, obj.childEvents.all()))
+
+    def _isFollowed(self, obj):
+        request = self.context.get('request', None)
+        if not request:
+            return None
+        return request.user.is_authenticated and (obj.id in request.user.followedOrgs.values_list('pk', flat=True))
     class Meta:
         """ Meta """
         model = Organization

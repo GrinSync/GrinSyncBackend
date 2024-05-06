@@ -34,7 +34,14 @@ def getAutoPopulatedEventUser():
 def home(request):
     """ The landing page for people interested in the app """
 
-    return render(request, "home.html")
+    now = datetime.now() # assigns the current time
+    tags = Tag.objects.filter(selectedDefault = True)
+    upcoming = Event.objects.filter(end__gte=now).exclude(start__gt = now + timedelta(days = 2))
+    upcoming = upcoming.filter(tags__in = tags)
+    upcoming = upcoming.exclude(studentsOnly = True)
+    upcoming = upcoming.order_by('start')
+
+    return render(request, "home.html", {'upcomingEvents': upcoming})
 
 @ensure_csrf_cookie
 @api_view(['GET'])

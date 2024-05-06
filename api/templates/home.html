@@ -23,11 +23,32 @@
     </div>
   </div>
 
+
+  <div class="upcomingEvents">
+    <h2>Preview Some Upcoming Events!</h2>
+    <div class="upcomingEventsSample">
+    {% for event in upcomingEvents %}
+      <div class="event">
+        <h3>{{ event.title }}</h3>
+        <h4 style="float: right;">{{ event.start }} - {{ event.end|time }}</h4>
+        <subtitle>
+          {% if event.hostorg %}
+            {{ event.hostorg.title }}
+          {% else %}
+            {{event.host.first_name}} {{event.host.last_name}}
+          {% endif %}
+        </subtitle>
+        <h4>{{ event.location }}</h4>
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+
   <div class="overview">
     <h2>For Students, Staff, Faculty, and the Community!</h2>
-    <p>For students and Grinnell employees, feel free to make a verified account with your Grinnell email, but
-if you're part of the larger Grinnell Community, or just visiting, feel free to use the app as a guest knowing 
-that you'll still see all public events!
+    <p>For students and Grinnell employees, you can make a verified account with your Grinnell email and create events! But
+      if you're part of the larger Grinnell Community, or even just visiting, now worries! Feel free to use the app as a guest  
+      knowing that you'll still see all public events!
     </p>
 
     <h2>How it works:</h2>

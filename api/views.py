@@ -37,7 +37,7 @@ def home(request):
     now = datetime.now() # assigns the current time
     tags = Tag.objects.filter(selectedDefault = True)
     upcoming = Event.objects.filter(end__gte=now).exclude(start__gt = now + timedelta(days = 2))
-    upcoming = upcoming.filter(tags__in = tags)
+    upcoming = upcoming.filter(tags__in = tags).distinct()
     upcoming = upcoming.exclude(studentsOnly = True)
     upcoming = upcoming.order_by('start')
 
@@ -592,7 +592,7 @@ def search(request): # TODO: decide if want one search for everything or differe
                 tagObjs.append(Tag.objects.get(name=tag))
             except ObjectDoesNotExist:
                 return JsonResponse({'error':f"Requested tag '{tag}' is not a valid tag"}, safe=False, status = 400)
-        matching = matching.filter(tags__in = tagObjs)
+        matching = matching.filter(tags__in = tagObjs).distinct()
 
     # hide student-only events if user is not a student
     if (not request.user.is_authenticated) or (request.user.type != "STU"):
@@ -605,26 +605,20 @@ def search(request): # TODO: decide if want one search for everything or differe
 def getAll(request):
     """ Return all the info for all events. """
     ## Do we want the calendar to update the tags by default?
-    # tags = request.GET.get("tag", None)
-    # if not tags: # This setup lets us do the default by not sending anything. Can't set no tags tho
-    #     if request.user.is_authenticated: # If the user's logged in, use their defaults
-    #         tags = request.user.interestedTags.all()
-    #     else: # Otherwise, we'll use the universal defaults
-    #         tags = Tag.objects.filter(selectedDefault = True)
-    # else:
-    #     tagObjs = []
-    #     for tag in tags.split(';'):
-    #         if tag == 'ALL':
-    #             tagObjs = "ALL"
-    #             break
-    #         try:
-    #             tagObjs.append(Tag.objects.get(name=tag))
-    #         except ObjectDoesNotExist:
-    #             return JsonResponse({'error':f"Requested tag '{tag}' is not a valid tag"}, safe=False, status = 400)
-    #     tags = tagObjs
+    tags = request.GET.get("tag", None)
+    if not tags: # If no tags are provided, just include all of them
+        tags = Tag.objects.all()
+    else:
+        tagObjs = []
+        for tag in tags.split(';'):
+            try:
+                tagObjs.append(Tag.objects.get(name=tag))
+            except ObjectDoesNotExist:
+                return JsonResponse({'error':f"Requested tag '{tag}' is not a valid tag"}, safe=False, status = 400)
+        tags = tagObjs
 
     events = Event.objects.all()
-    # events = events.filter(tags__in = tags)
+    events = events.filter(tags__in = tags).distinct()
 
     # Removes student-only events if user is not a student
     # We do this instead of the decorator for this function because everyone should be able to see public events
@@ -667,7 +661,7 @@ def getUpcoming(request):
     upcoming = Event.objects.filter(end__gte=now) # gets events with an ending time >= to now
     upcoming = upcoming.exclude(start__gt = now + timedelta(weeks = 1)) # limits upcoming events a week out
     if tags != "ALL":
-        upcoming = upcoming.filter(tags__in = tags)
+        upcoming = upcoming.filter(tags__in = tags).distinct()
 
     # hide student-only events if user is not a student
     if (not request.user.is_authenticated) or (request.user.type != "STU"):

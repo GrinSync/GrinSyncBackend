@@ -332,7 +332,7 @@ def getOrg(request):
             return HttpResponse(f"Org with id/name '{orgID}' does not exist", status = 404)
 
     # Seralize the org objects and return that info
-    orgsJson = serializers.OrgSerializer(org)
+    orgsJson = serializers.OrgSerializer(org, context={'request': request})
     return JsonResponse(orgsJson.data, safe=False)
 
 @api_view(['GET'])
@@ -369,7 +369,7 @@ def getOrgEvents(request):
 
     events = org.childEvents.all()
     # Seralize the org objects and return that info
-    eventsJson = serializers.EventSerializer(events, many = True)
+    eventsJson = serializers.EventSerializer(events, many = True, context={'request': request})
     return JsonResponse(eventsJson.data, safe=False)
 
 @api_view(['POST'])
@@ -473,8 +473,10 @@ def createEvent(request):
             hostOrg = Organization.objects.get(name=orgName)
         except ObjectDoesNotExist:
             return HttpResponse(f"Org with name '{orgName}' does not exist", status = 404)
+        contactEmail = hostOrg.email
     else:
         hostOrg = None
+        contactEmail = request.user.email
 
     # Turn the start and end times from a string to a datetime that we can actually work with
     try:
@@ -506,7 +508,8 @@ def createEvent(request):
         offset = relativedelta.relativedelta(days=repeatDays, months=repeatMonths)
         firstEvent = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
                                     location = location, start = startDT, end = endDT,
-                                    description = description, studentsOnly = studentsOnly)
+                                    description = description, studentsOnly = studentsOnly,
+                                    contactEmail = contactEmail)
         addEventTags(firstEvent, tags) # addEventTags saves the event too, which feels harmless, but idk
 
         prevEvent = firstEvent
@@ -515,7 +518,8 @@ def createEvent(request):
         while startDT <= repeatEnd:
             event = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
                                     location = location, start = startDT, end = endDT,
-                                    description = description, studentsOnly = studentsOnly)
+                                    description = description, studentsOnly = studentsOnly,
+                                    contactEmail = contactEmail)
             addEventTags(event, tags)
             prevEvent.nextRepeat = event
             prevEvent.save()
@@ -531,7 +535,8 @@ def createEvent(request):
     # Actually interact with the database and create the event
     event = Event.objects.create(host = request.user, parentOrg = hostOrg, title = title,
                                     location = location, start = startDT, end = endDT,
-                                    description = description, studentsOnly = studentsOnly)
+                                    description = description, studentsOnly = studentsOnly,
+                                    contactEmail = contactEmail)
     addEventTags(event, tags)
 
     # Send the user back the information it'll need

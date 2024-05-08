@@ -5,16 +5,17 @@ from smtplib import SMTPException
 import pytz
 from dateutil import relativedelta
 from django.contrib.auth.tokens import default_token_generator
-# from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.db import IntegrityError
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 
 import api.serializers as serializers
 # import django.middleware.csrf as csrf
@@ -22,6 +23,8 @@ import api.serializers as serializers
 # from rest_framework.response import Response
 from api.aux_functions import addEventTags, setEventTags
 from api.models import Event, Organization, Tag, User
+
+#TODO: Check org active, lookup table, profanity filtering, blocking users?
 
 CST = pytz.timezone('America/Chicago')
 
@@ -268,6 +271,8 @@ def claimOrg(request): # Potential todo: let existing leaders add other leaders
         org = Organization.objects.get(pk = oid)
     except ObjectDoesNotExist:
         return JsonResponse({'error':'No org with the given id exists'}, safe = False, status = 400)
+    if not org.is_active:
+        return HttpResponse("You cannot join an org that hasn't been verified", status = 404)       
 
     user = request.user
 
@@ -341,8 +346,9 @@ def getUserOrgs(request):
     """ Returns a user's child orgs. """
     user = request.user
 
+    usersOrgs = user.childOrgs.filter(is_active = True)
     # Seralize the org objects and return that info
-    orgsJson = serializers.OrgSerializer(user.childOrgs.all(), many = True, context={'request': request})
+    orgsJson = serializers.OrgSerializer(usersOrgs, many = True, context={'request': request})
     return JsonResponse(orgsJson.data, safe=False)
 
 @api_view(['GET'])
@@ -350,8 +356,10 @@ def getUserOrgs(request):
 def getAllOrgs(request):
     """ Returns all valid student orgs. """
 
+    activeOrgs = Organization.objects.filter(is_active = True)
+
     # Seralize the org objects and return that info
-    orgsJson = serializers.OrgSerializer(Organization.objects.all(), many = True, context={'request': request})
+    orgsJson = serializers.OrgSerializer(activeOrgs, many = True, context={'request': request})
     return JsonResponse(orgsJson.data, safe=False)
 
 @api_view(['GET'])
@@ -383,6 +391,9 @@ def followOrg(request):
         return HttpResponse(f"Organization with id '{oid}' does not exist", status = 404)
     except ValueError:
         return HttpResponse("No id provided", status = 404)
+    if not org.is_active:
+        return HttpResponse("You cannot follow an org that hasn't been verified", status = 404)       
+
 
     user = request.user
     user.followedOrgs.add(org)
@@ -434,7 +445,8 @@ def toggleFollowedOrg(request):
 def getFollowedOrgs(request):
     """ Return all of a user's followed orgs. """
     user = request.user
-    orgJson = serializers.OrgSerializer(user.followedOrgs.all(), many = True, context={'request': request})
+    followedActiveOrgs = user.followedOrgs.filter(is_active = True)
+    orgJson = serializers.OrgSerializer(followedActiveOrgs, many = True, context={'request': request})
     return JsonResponse(orgJson.data, safe=False, status=200)
 
 
@@ -473,8 +485,10 @@ def createEvent(request):
             hostOrg = Organization.objects.get(name=orgName)
         except ObjectDoesNotExist:
             return HttpResponse(f"Org with name '{orgName}' does not exist", status = 404)
+        if not hostOrg.is_active:
+            return HttpResponse("You cannot create an event for an org that hasn't been verified", status = 404)       
         if request.user not in hostOrg.studentLeaders.all():
-            return HttpResponse(f"You cannot create an event for an org you're not a part of", status = 404)
+            return HttpResponse("You cannot create an event for an org you're not a part of", status = 404)
         contactEmail = hostOrg.email
     else:
         hostOrg = None
@@ -852,6 +866,8 @@ def editEvent(request):
         # Associate an event with an organization
     if newOrg:
         newOrg = Organization.objects.get(name=newOrg)
+        if not newOrg.is_active:
+            return HttpResponse("You cannot add an org that hasn't been verified to an event", status = 404)
 
 
     firstEventpk = event.pk
@@ -900,7 +916,7 @@ def editEvent(request):
     return JsonResponse({"id":firstEventpk}, safe=False, status=200)
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated]) #PLUS the user should have created the event
+@permission_classes([IsAuthenticated])
 def deleteEvent(request):
     """ Delete an event. """
     eid = request.POST.get("id", "")
@@ -911,19 +927,20 @@ def deleteEvent(request):
     except ValueError:
         return HttpResponse("No id provided", status = 404)
 
-    #check that request.user = event.host are the same before deleting the vevent
-    if request.user == event.host:
-        if hasattr(event, 'previousRepeat') and event.previousRepeat is not None:
-                        # Nothing to do if it's the first event (also, it would handle
-                        # it just fine if we didn't do this for the last event either, but whatever)
-            prevEvent = event.previousRepeat
-            prevEvent.nextRepeat = event.nextRepeat
-            event.delete() # Need this order otherwise the 1-to-1 field doesn't allow it
-            prevEvent.save()
-        else:
-            event.delete()
+    # Check that the user is a host or a leader of the host org
+    if (request.user != event.host) and (
+            (not event.parentOrg) or (request.user not in event.parentOrg.studentLeaders.all())):
+        return JsonResponse({'error':"This user is not the event's host"}, status = 403)
+
+    if hasattr(event, 'previousRepeat') and event.previousRepeat is not None:
+                    # Nothing to do if it's the first event (also, it would handle
+                    # it just fine if we didn't do this for the last event either, but whatever)
+        prevEvent = event.previousRepeat
+        prevEvent.nextRepeat = event.nextRepeat
+        event.delete() # Need this order otherwise the 1-to-1 field doesn't allow it
+        prevEvent.save()
     else:
-        return HttpResponse("This event can't be deleted because user is not the event's host.", status = 404)
+        event.delete()
 
     return JsonResponse("Success", safe=False, status = 200)
 
@@ -1012,6 +1029,18 @@ def reassignEvent(request):
     event.save()
     return render(request, "registration/event_verification_confirmation.html")
 
+
+@login_required # Make sure user is logged in
+def deleteAccount(request):
+    """ Allows users to delete their account """
+     # if this is a POST request we need to process the form data
+    if request.method == "POST":
+        request.user.delete()
+        return HttpResponseRedirect('/')
+
+    return render(request, "accountDeletion.html")
+
+@staff_member_required # Make sure user is logged in
 def tagManagerPage(request):
     """ A html page for us to manage the tags """
      # if this is a POST request we need to process the form data

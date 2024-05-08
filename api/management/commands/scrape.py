@@ -67,6 +67,7 @@ def scrapeCalendar(num_events = "false"):
             lat = event['location_latitude']
             long = event['location_longitude']
         else:
+            # TODO: Set up a lookup a table for different common locations
             lat = None
             long = None
 

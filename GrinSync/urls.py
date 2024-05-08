@@ -22,6 +22,7 @@ from api import views as apiViews
 urlpatterns = [
     path('', apiViews.home, name = 'homePage'),
     path('admin/', admin.site.urls),
+    path('accounts/', include("django.contrib.auth.urls")),
     path('api/search', apiViews.search, name = 'search'),
     path('api/getUser', apiViews.getUser, name = 'getUser'),
     path('api/getEvent', apiViews.getEvent, name = 'getEvent'),
@@ -59,5 +60,6 @@ urlpatterns = [
     path('api/followOrg', apiViews.followOrg, name = 'followOrg'),
     path('api/unfollowOrg', apiViews.unfollowOrg, name = 'unfollowOrg'),
     path('api/toggleFollowedOrg', apiViews.toggleFollowedOrg, name = 'toggleFollowedOrg'),
+    path('deleteAccount/', apiViews.deleteAccount, name = 'accountDeletion'),
     path('tags/', apiViews.tagManagerPage, name = 'tagManager'),
 ]

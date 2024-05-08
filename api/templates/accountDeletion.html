@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h1>DELETE YOUR ACCOUNT</h1>
+<h3>If you're SURE that you want us to delete your account and remove all associated info, click below</h3>
+<form method="post">
+    {% csrf_token %}
+    <button class="formButton" type="submit"> Delete Account </button>
+</form>
+{% endblock %}

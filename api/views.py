@@ -473,6 +473,8 @@ def createEvent(request):
             hostOrg = Organization.objects.get(name=orgName)
         except ObjectDoesNotExist:
             return HttpResponse(f"Org with name '{orgName}' does not exist", status = 404)
+        if request.user not in hostOrg.studentLeaders.all():
+            return HttpResponse(f"You cannot create an event for an org you're not a part of", status = 404)
         contactEmail = hostOrg.email
     else:
         hostOrg = None
@@ -605,7 +607,7 @@ def search(request): # TODO: decide if want one search for everything or differe
 def getAll(request):
     """ Return all the info for all events. """
     ## Do we want the calendar to update the tags by default?
-    tags = request.GET.get("tag", None)
+    tags = request.GET.get("tags", None)
     if not tags: # If no tags are provided, just include all of them
         tags = Tag.objects.all()
     else:

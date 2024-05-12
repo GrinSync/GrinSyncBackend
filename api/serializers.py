@@ -1,3 +1,8 @@
+"""
+This file contains a set of function which allow us to easily and consistently turn objects into JSON data we
+can return to the client. In some of them, we create our own field to capture object relationship data that
+isn't otherwise included from django by default.
+"""
 from rest_framework import serializers
 from .models import Organization, Tag, User, Event
 

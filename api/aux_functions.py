@@ -13,7 +13,7 @@ def addEventTags(event, tags, create_new = False):
         tag = tag.replace('&amp;','and')
         tag = string.capwords(tag)
         if create_new:
-            tagObj, created = Tag.objects.get_or_create(name=tag)
+            tagObj, created = Tag.objects.get_or_create(name=tag) #pylint: disable=W0612
         else:
             try:
                 tagObj = Tag.objects.get(name=tag)

@@ -1,9 +1,15 @@
+"""
+This is the file where most of the logic happens. Each file has a descriptor informing you to it's purpose,
+but bascially, this is where the modification and updating of the information stored in the database occurs
+"""
 # pylint: disable=unused-argument
 from datetime import datetime, timedelta
 from smtplib import SMTPException
 
 import pytz
 from dateutil import relativedelta
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
@@ -14,17 +20,14 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
-from django.contrib.auth.decorators import login_required
-from django.contrib.admin.views.decorators import staff_member_required
 
 import api.serializers as serializers
-# import django.middleware.csrf as csrf
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
 from api.aux_functions import addEventTags, setEventTags
 from api.models import Event, Organization, Tag, User
 
-#TODO: Check org active, lookup table, profanity filtering, blocking users?
+
+
+#TODO: Check org active, profanity filtering, blocking users?
 
 CST = pytz.timezone('America/Chicago')
 
@@ -272,7 +275,7 @@ def claimOrg(request): # Potential todo: let existing leaders add other leaders
     except ObjectDoesNotExist:
         return JsonResponse({'error':'No org with the given id exists'}, safe = False, status = 400)
     if not org.is_active:
-        return HttpResponse("You cannot join an org that hasn't been verified", status = 404)       
+        return HttpResponse("You cannot join an org that hasn't been verified", status = 404)
 
     user = request.user
 
@@ -392,8 +395,7 @@ def followOrg(request):
     except ValueError:
         return HttpResponse("No id provided", status = 404)
     if not org.is_active:
-        return HttpResponse("You cannot follow an org that hasn't been verified", status = 404)       
-
+        return HttpResponse("You cannot follow an org that hasn't been verified", status = 404)
 
     user = request.user
     user.followedOrgs.add(org)
@@ -486,7 +488,7 @@ def createEvent(request):
         except ObjectDoesNotExist:
             return HttpResponse(f"Org with name '{orgName}' does not exist", status = 404)
         if not hostOrg.is_active:
-            return HttpResponse("You cannot create an event for an org that hasn't been verified", status = 404)       
+            return HttpResponse("You cannot create an event for an org that hasn't been verified", status = 404)
         if request.user not in hostOrg.studentLeaders.all():
             return HttpResponse("You cannot create an event for an org you're not a part of", status = 404)
         contactEmail = hostOrg.email

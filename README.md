@@ -1,7 +1,8 @@
 # GrinSync
 The Django backend for the GrinSync project. 
 
-If you're already set up, check here for live updating documentation: [https://documenter.getpostman.com/view/29620227/2sA35JzKYo](https://documenter.getpostman.com/view/29620227/2sA35JzKYo)
+If you're already set up, check here for live API documentation: [https://documenter.getpostman.com/view/29620227/2sA35JzKYo](https://documenter.getpostman.com/view/29620227/2sA35JzKYo)
+
 Otherwise, the info below will help you get started
 
 ## Repository Layout

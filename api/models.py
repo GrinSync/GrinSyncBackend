@@ -1,4 +1,10 @@
-""" models.py - interfaces and structures the database """
+"""
+models.py - interfaces and structures the database
+
+This is the file that informs django how to organize info in the database - that events are hosted by users,
+that users have different types, etc. Then, once the structure is built, the contents can be changed,
+ususally in views.py
+"""
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.forms import ValidationError

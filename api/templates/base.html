@@ -10,11 +10,18 @@
 
     <body>
     <div class="header">
-        <img src="{% static 'CrabClear.png'%}"/>
-        <h1>GrinSync</h1>
+        <a href="/" style="text-decoration: none;">
+            <img src="{% static 'CrabClear.png'%}"/>
+            <h1>GrinSync</h1>
+        </a>
     </div>
     <div class="content">
         {% block content %}{% endblock content %}
     </div>
     </body>
+    <footer>
+        <a href="privacyPolicy/" class="privacyLink" data-replace="Don't trust us? :)">
+            <span>Our Privacy Policy</span></a>
+        {% comment %} <a href="privacyPolicy/">Don't trust us?</a> {% endcomment %}
+    </footer>
 </html>

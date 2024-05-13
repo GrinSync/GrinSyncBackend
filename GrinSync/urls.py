@@ -6,6 +6,7 @@ I'm just too worried it would break something.
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic.base import TemplateView
 from rest_framework.authtoken import views as tokenViews
 from api import views as apiViews
 
@@ -50,6 +51,7 @@ urlpatterns = [
     path('api/followOrg', apiViews.followOrg, name = 'followOrg'),
     path('api/unfollowOrg', apiViews.unfollowOrg, name = 'unfollowOrg'),
     path('api/toggleFollowedOrg', apiViews.toggleFollowedOrg, name = 'toggleFollowedOrg'),
+    path('privacyPolicy/', TemplateView.as_view(template_name='privacyPolicy.html'), name = 'pp'),
     path('deleteAccount/', apiViews.deleteAccount, name = 'accountDeletion'),
     path('tags/', apiViews.tagManagerPage, name = 'tagManager'),
 ]

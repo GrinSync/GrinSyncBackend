@@ -54,6 +54,7 @@ def checkCommonGrinnellLocations(loc_name):
                         (['rosenbloom','football field', 'stride field'], (41.75318, -92.719881)),
                         (['osgood', 'natatorium'],(41.752342, -92.720638)),
                         (['track'],(41.752342, -92.720638)),
+                        (['tennis courts'],(41.752765, -92.718050)),
                         (['central park'],(41.74238, -92.723181)),
                         (['stew'],(41.744202, -92.724325))
                      ]
@@ -102,7 +103,7 @@ def scrapeCalendar(num_events = "false"):
             long = event['location_longitude']
         else:
             # Check the lookup table for different common locations
-            lat, long = checkCommonGrinnellLocations(location)
+            lat, long = checkCommonGrinnellLocations(location) # TODO: Does this check for home vs away? No, but looks like the away are usually just names of the city
 
         if event['description']:
             description = event['description'].strip() # We won't clear the html here cause we're rendering it on the frontend
@@ -158,6 +159,37 @@ def scrapeCalendar(num_events = "false"):
 
             event = Event.objects.get(liveWhaleID = externalID)
         except ObjectDoesNotExist: # If there's nothing with that LiveWhale ID, that means we don't have this event yet
+
+            # Ok clearly the livewhale filtering alone wasn't enough since there's lots of duplicates all over the place.
+                # Seems like the college often updates events/puts two down for rain locations and those have different IDS
+            ## TODO: Support Rain/Alt Locations
+            matches = Event.objects.filter(host = autoPopulateUser, title = title, start = startTime, end = endTime)
+            if matches.count() == 1:
+                # Idk this just is the best I can think of. If something's wrong, they can make an account
+                if any(x in description.lower() for x in [" overflow ", " rain "]):
+                    description = matches[0].description
+                if location != matches[0].location:
+                    if not Event.objects.filter(pk__gt = matches[0].pk).exists(): # If the match is the most recent, it's likely it's an alternative, if it's not then it might be a revision
+                        description += f"\n<br><i>Potential Alternative/Rain Location Automatically Detected: {location}</i>"
+                        matches.update(host = autoPopulateUser, title = title, start = startTime, end = endTime,
+                                        description = description, studentsOnly = False,
+                                        contactEmail = contactEmail,
+                                        lat = lat, long = long)
+                    else:
+                        description = description + str(f"\n<br><i>Potential Alternative/Rain Location Automatically Detected: {matches[0].location}</i>"),
+                        matches.update(host = autoPopulateUser, title = title, start = startTime, end = endTime,
+                                        location = location, description = description, studentsOnly = False,
+                                        liveWhaleID = externalID, contactEmail = contactEmail,
+                                        lat = lat, long = long)
+                else:
+                    matches.update(host = autoPopulateUser, title = title, start = startTime, end = endTime,
+                                    description = description, studentsOnly = False,
+                                    liveWhaleID = externalID, contactEmail = contactEmail,
+                                    lat = lat, long = long)
+                continue
+            elif matches.count() >= 1:
+                continue
+
             event = Event.objects.create(host = autoPopulateUser, title = title,
                                     location = location, start = startTime, end = endTime,
                                     description = description, studentsOnly = False, # I'm going to assume thats

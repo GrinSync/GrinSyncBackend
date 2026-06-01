@@ -27,7 +27,9 @@ jobs:
         pip install -r requirements.txt
     - name: Create Temp Secret File
       run: |
-        echo 'SECRET_KEY="123"' > .env
+        echo 'SECRET_KEY="123"
+        EMAIL_HOST_USER=""
+        EMAIL_HOST_PASSWORD=""' > .env
     - name: Check Database config and setup
       run: |
         python manage.py makemigrations
@@ -38,4 +40,4 @@ jobs:
         python manage.py test
     - name: Remove Temp Secret File
       run: |
-        rm GrinSync/extra_settings.py
+        rm .env

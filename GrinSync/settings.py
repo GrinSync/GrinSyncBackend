@@ -13,7 +13,14 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 import os
 from pathlib import Path
-from .extra_settings import *
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / '.env')
+
+DEBUG = False
+SECRET_KEY = os.environ['SECRET_KEY']
+EMAIL_HOST_USER = os.environ['EMAIL_HOST_USER']
+EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -153,3 +160,9 @@ EMAIL_TIMEOUT = 20
 DEFAULT_FROM_EMAIL = "info@grinsync.com"
 #EMAIL_HOST_USER in extra_settings
 #EMAIL_HOST_PASSWORD in extra_settings
+
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'

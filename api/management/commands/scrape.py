@@ -2,7 +2,7 @@
 This file creates a command that can be run from the command line. It scrapes events from Grinnell's live
 calendar via API and is run by cron on the server every night.
 """
-import datetime
+from datetime import datetime, timedelta
 import json
 import re
 import pytz
@@ -81,13 +81,13 @@ def scrapeCalendar(num_events = "false"):
     for event in events: # TODO: Add filtering for intended audience (at least make sure it's not profs)
                          # And by location. And add tags for student orgs
         title = event['title'].strip().replace('&amp;','&') # Replace the HTML & with &
-        startTime = datetime.datetime.strptime(event['date_utc'], "%Y-%m-%d %H:%M:%S")
+        startTime = datetime.strptime(event['date_utc'], "%Y-%m-%d %H:%M:%S")
         startTime = pytz.utc.localize(startTime) # Make it timezone aware
         if event['date2_utc']:
-            endTime = datetime.datetime.strptime(event['date2_utc'], "%Y-%m-%d %H:%M:%S")
+            endTime = datetime.strptime(event['date2_utc'], "%Y-%m-%d %H:%M:%S")
             endTime = pytz.utc.localize(endTime)
         else:
-            endTime = startTime + datetime.timedelta(hours = 1) # If we don't know the end time, assume lasts an hour
+            endTime = startTime + timedelta(hours = 1) # If we don't know the end time, assume lasts an hour
 
         if event['location_title']:
             location = event['location_title']

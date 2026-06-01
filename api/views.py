@@ -3,7 +3,8 @@ This is the file where most of the logic happens. Each file has a descriptor inf
 but bascially, this is where the modification and updating of the information stored in the database occurs
 """
 # pylint: disable=unused-argument
-from datetime import datetime, timedelta
+from datetime import timedelta
+from django.utils import timezone
 from smtplib import SMTPException
 
 import pytz
@@ -40,7 +41,7 @@ def getAutoPopulatedEventUser():
 def home(request):
     """ The landing page for people interested in the app """
 
-    now = datetime.now() # assigns the current time
+    now = timezone.now() # assigns the current time
     tags = Tag.objects.filter(selectedDefault = True)
     upcoming = Event.objects.filter(end__gte=now).exclude(start__gt = now + timedelta(days = 2))
     upcoming = upcoming.filter(tags__in = tags).distinct()
@@ -675,7 +676,7 @@ def getUpcoming(request):
                 return JsonResponse({'error':f"Requested tag '{tag}' is not a valid tag"}, safe=False, status = 400)
         tags = tagObjs
 
-    now = datetime.now() # assigns the current time
+    now = timezone.now() # assigns the current time
     upcoming = Event.objects.filter(end__gte=now) # gets events with an ending time >= to now
     upcoming = upcoming.exclude(start__gt = now + timedelta(weeks = 1)) # limits upcoming events a week out
     if tags != "ALL":
